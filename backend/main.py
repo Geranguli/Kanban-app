@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from routers import users, boards
 from database import engine, Base
-from models import User
+from models import User, Board, KanbanColumn, Card
 
 app = FastAPI()
 
