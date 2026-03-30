@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from database import get_db
 from models import Board, User
-from schemas import BoardCreate, BoardResponse
+from schemas import BoardCreate, BoardUpdate, BoardResponse
 from typing import List
 from routers.auth import get_current_user
 
@@ -42,3 +42,44 @@ def get_boards(
 ):
     stmt = select(Board).where(Board.user_id == current_user.id)
     return db.scalars(stmt).all()
+
+# обновить доску
+@router.put("/{board_id}", response_model=BoardResponse)
+def update_board(
+    board_id: int,
+    board_update: BoardUpdate,
+    db: Session = Depends(get_db)
+):
+    stmt = select(Board).where(Board.id == board_id)
+    db_board = db.scalars(stmt).first()
+    if not db_board:
+        raise HTTPException(status_code=404, detail="Доска не найдена")
+
+    if board_update.title is not None:
+        db_board.title = board_update.title
+
+    db.commit()
+    db.refresh(db_board)
+    return db_board
+
+# удалить конкретную доску
+@router.delete("/{board_id}")
+def delete_board(board_id: int, db: Session = Depends(get_db)):
+    stmt = select(Board).where(Board.id == board_id)
+    db_board = db.scalars(stmt).first()
+    if not db_board:
+        raise HTTPException(status_code=404, detail="Доска не найдена")
+    db.delete(db_board)
+    db.commit()
+    return {"message": "Доска удалена"}
+
+# удалить все доски текущего пользователя
+@router.delete("/")
+def delete_boards(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    boards_stmt = delete(Board).where(Board.user_id == current_user.id)
+    db.execute(boards_stmt)
+    db.commit()
+    return {"message": "Доски удалены"}
