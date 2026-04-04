@@ -7,6 +7,7 @@ import { fetchCards } from "../store/cardsSlice";
 import { fetchBoards } from "../store/boardsSlice";
 
 import ColumnItem from "../components/board/ColumnItem";
+import CardModal from "../components/board/CardModal";
 
 function Board() {
   const { id } = useParams();
@@ -70,6 +71,8 @@ function Board() {
         />
         <button onClick={handleCreateColumn}>Add column</button>
       </div>
+
+      <CardModal card={editingCard} onClose={() => setEditingCard(null)} />
     </div>
   );
 }

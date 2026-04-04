@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteColumn, updateColumn } from "../../store/columnsSlice";
 import { createCard } from "../../store/cardsSlice";
+import CardItem from "./CardItem";
 
 function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
@@ -56,11 +57,10 @@ function ColumnItem({ column, cards, onEditCard }) {
           </button>
         </>
       )}
+
+      {/* рендерим карточки через отдельный компонент */}
       {cards.map((card) => (
-        <div key={card.id}>
-          <span>{card.title}</span>
-          <button onClick={() => onEditCard(card)}>Edit</button>
-        </div>
+        <CardItem key={card.id} card={card} onEdit={onEditCard} />
       ))}
 
       <div>
