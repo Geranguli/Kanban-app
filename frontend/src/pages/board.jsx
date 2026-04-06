@@ -8,6 +8,10 @@ import { fetchBoards } from "../store/boardsSlice";
 
 import ColumnItem from "../components/board/ColumnItem";
 import CardModal from "../components/board/CardModal";
+// Добавьте, если ещё нет:
+import { moveCard } from "../store/cardsSlice";
+
+import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
 
 function Board() {
   const { id } = useParams();
@@ -21,6 +25,7 @@ function Board() {
 
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [editingCard, setEditingCard] = useState(null);
+  const [activeCard, setActiveCard] = useState(null);
 
   // загружаем колонки при открытии доски
   useEffect(() => {
@@ -40,6 +45,56 @@ function Board() {
     setNewColumnTitle("");
   };
 
+  // запоминаем карточку которую начали тащить
+  const handleDragStart = (event) => {
+    const card = cards.find((c) => c.id === event.active.id);
+    setActiveCard(card);
+  };
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveCard(null);
+
+    if (!over) return;
+    if (active.id === over.id) return;
+
+    const draggedCard = cards.find((c) => c.id === active.id);
+    if (!draggedCard) return;
+
+    const oldColumnId = draggedCard.column_id;
+
+    let newColumnId;
+    let newPosition;
+
+    const overCard = cards.find((c) => c.id === over.id);
+
+    if (overCard) {
+      // бросили на другую карточку - встаём перед ней
+      newColumnId = overCard.column_id;
+      const cardsInColumn = cards
+        .filter((c) => c.column_id === newColumnId)
+        .sort((a, b) => a.position - b.position);
+      newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
+    } else {
+      // бросили на пустую колонку — встаём в конец
+      newColumnId = Number(over.id);
+      const cardsInColumn = cards
+        .filter((c) => c.column_id === newColumnId)
+        .sort((a, b) => a.position - b.position);
+      newPosition = cardsInColumn.length;
+    }
+
+    await dispatch(
+      moveCard({ cardId: active.id, newColumn: newColumnId, newPosition }),
+    );
+
+    // обновляем карточки в затронутых колонках
+    dispatch(fetchCards(newColumnId));
+    if (oldColumnId !== newColumnId) {
+      dispatch(fetchCards(oldColumnId));
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
@@ -47,18 +102,29 @@ function Board() {
     <div>
       <h1>{board ? board.title : "..."}</h1>
 
-      <div style={{ display: "flex", gap: 20 }}>
-        {columns.map((column) => (
-          <ColumnItem
-            key={column.id}
-            column={column}
-            cards={cards
-              .filter((c) => c.column_id === column.id)
-              .sort((a, b) => a.position - b.position)}
-            onEditCard={setEditingCard}
-          />
-        ))}
-      </div>
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div style={{ display: "flex", gap: 20 }}>
+          {columns.map((column) => (
+            <ColumnItem
+              key={column.id}
+              column={column}
+              cards={cards
+                .filter((c) => c.column_id === column.id)
+                .sort((a, b) => a.position - b.position)}
+              onEditCard={setEditingCard}
+            />
+          ))}
+        </div>
+
+        {/* показываем карточку под курсором во время перетаскивания */}
+        <DragOverlay>
+          {activeCard ? <div>{activeCard.title}</div> : null}
+        </DragOverlay>
+      </DndContext>
 
       <div>
         <input

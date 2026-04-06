@@ -2,10 +2,18 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteColumn, updateColumn } from "../../store/columnsSlice";
 import { createCard } from "../../store/cardsSlice";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import CardItem from "./CardItem";
 
 function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
+
+  // делаем колонку drop-зоной для карточек
+  const { setNodeRef } = useDroppable({ id: column.id });
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
@@ -62,6 +70,16 @@ function ColumnItem({ column, cards, onEditCard }) {
       {cards.map((card) => (
         <CardItem key={card.id} card={card} onEdit={onEditCard} />
       ))}
+
+      {/*передаем id карточек для правильного расчета позиций */}
+      <SortableContext
+        items={cards.map((card) => card.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {cards.map((card) => (
+          <CardItem key={card.id} card={card} onEdit={onEditCard} />
+        ))}
+      </SortableContext>
 
       <div>
         <input

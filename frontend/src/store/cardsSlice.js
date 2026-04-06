@@ -19,6 +19,18 @@ export const createCard = createAsyncThunk(
   },
 );
 
+// thunk для drag-and-drop: отправляем новую колонку и позицию
+export const moveCard = createAsyncThunk(
+  "cards/moveCard",
+  async ({ cardId, newColumn, newPosition }) => {
+    const res = await api.patch(`/cards/${cardId}/move`, {
+      new_column: newColumn,
+      new_position: newPosition,
+    });
+    return res.data;
+  },
+);
+
 // удалить карточку
 export const deleteCard = createAsyncThunk(
   "cards/deleteCard",
@@ -80,6 +92,14 @@ const cardsSlice = createSlice({
         const index = state.cards.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) {
           state.cards[index] = action.payload;
+        }
+      })
+      // обновляем карточку после перемещения
+      .addCase(moveCard.fulfilled, (state, action) => {
+        const updatedCard = action.payload;
+        const index = state.cards.findIndex((c) => c.id === updatedCard.id);
+        if (index !== -1) {
+          state.cards[index] = updatedCard;
         }
       });
   },
