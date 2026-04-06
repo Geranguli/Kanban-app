@@ -49,6 +49,7 @@ const boardsSlice = createSlice({
     builder
       .addCase(fetchBoards.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchBoards.fulfilled, (state, action) => {
         state.loading = false;

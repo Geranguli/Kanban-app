@@ -64,7 +64,6 @@ const cardsSlice = createSlice({
       })
       .addCase(fetchCards.fulfilled, (state, action) => {
         state.loading = false;
-        // заменяем карточки этой колонки
         state.cards = state.cards.filter(
           (c) => c.column_id !== action.payload.columnId,
         );
@@ -76,6 +75,7 @@ const cardsSlice = createSlice({
       })
       .addCase(createCard.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(createCard.fulfilled, (state, action) => {
         state.loading = false;
@@ -90,17 +90,12 @@ const cardsSlice = createSlice({
       })
       .addCase(updateCard.fulfilled, (state, action) => {
         const index = state.cards.findIndex((c) => c.id === action.payload.id);
-        if (index !== -1) {
-          state.cards[index] = action.payload;
-        }
+        if (index !== -1) state.cards[index] = action.payload;
       })
-      // обновляем карточку после перемещения
+      //обновляем карточки после перемещения
       .addCase(moveCard.fulfilled, (state, action) => {
-        const updatedCard = action.payload;
-        const index = state.cards.findIndex((c) => c.id === updatedCard.id);
-        if (index !== -1) {
-          state.cards[index] = updatedCard;
-        }
+        const index = state.cards.findIndex((c) => c.id === action.payload.id);
+        if (index !== -1) state.cards[index] = action.payload;
       });
   },
 });

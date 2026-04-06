@@ -10,7 +10,7 @@ export const loginUser = createAsyncThunk(
       // сохраняем пользователя в localStorage чтобы не терять после перезагрузки
       localStorage.setItem("user", JSON.stringify(res.data));
       return res.data;
-    } catch (err) {
+    } catch {
       return rejectWithValue("Ошибка авторизации");
     }
   },

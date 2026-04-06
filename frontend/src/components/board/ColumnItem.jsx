@@ -28,6 +28,7 @@ function ColumnItem({ column, cards, onEditCard }) {
   const { error } = useSelector((state) => state.cards);
 
   const handleUpdateColumn = () => {
+    if (!title.trim()) return;
     dispatch(updateColumn({ columnId: column.id, title }));
     setEditing(false);
   };
@@ -48,13 +49,16 @@ function ColumnItem({ column, cards, onEditCard }) {
   };
 
   return (
-    <div>
+    <div ref={setNodeRef}>
       {editing ? (
         <input
           value={title}
           autoFocus
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleUpdateColumn}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleUpdateColumn();
+          }}
         />
       ) : (
         <>
@@ -65,11 +69,6 @@ function ColumnItem({ column, cards, onEditCard }) {
           </button>
         </>
       )}
-
-      {/* рендерим карточки через отдельный компонент */}
-      {cards.map((card) => (
-        <CardItem key={card.id} card={card} onEdit={onEditCard} />
-      ))}
 
       {/*передаем id карточек для правильного расчета позиций */}
       <SortableContext
@@ -104,7 +103,7 @@ function ColumnItem({ column, cards, onEditCard }) {
           onChange={(e) => setNewCard({ ...newCard, due_date: e.target.value })}
         />
         <button onClick={handleCreateCard}>Add card</button>
-        {error && <p>{error}</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </div>
     </div>
   );
