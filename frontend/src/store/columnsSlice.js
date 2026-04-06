@@ -42,18 +42,23 @@ const columnsSlice = createSlice({
   initialState: {
     columns: [],
     loading: false,
+    error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchColumns.pending, (state) => {
         state.loading = true;
+        state.error = null; // сбрасываем ошибку при новом запросе
       })
       .addCase(fetchColumns.fulfilled, (state, action) => {
         state.loading = false;
         state.columns = action.payload;
       })
-
+      .addCase(fetchColumns.rejected, (state) => {
+        state.loading = false;
+        state.error = "Ошибка загрузки колонок";
+      })
       .addCase(createColumn.fulfilled, (state, action) => {
         state.columns.push(action.payload);
       })
@@ -64,9 +69,7 @@ const columnsSlice = createSlice({
         const index = state.columns.findIndex(
           (c) => c.id === action.payload.id,
         );
-        if (index !== -1) {
-          state.columns[index] = action.payload;
-        }
+        if (index !== -1) state.columns[index] = action.payload;
       });
   },
 });
