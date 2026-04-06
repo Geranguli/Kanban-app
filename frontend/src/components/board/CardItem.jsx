@@ -7,25 +7,31 @@ function CardItem({ card, onEdit }) {
   const dispatch = useDispatch();
 
   // подключаем карточку к dnd-kit как перетаскиваемый элемент
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: card.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1, // карточка полупрозрачна во время перетаскивания
   };
 
   return (
     <div ref={setNodeRef} style={style}>
       {/* область для перетаскивания */}
-      <div {...attributes} {...listeners}>
+      <div {...attributes} {...listeners} style={{ cursor: "grab" }}>
         ⠿
       </div>
-
-      <div>{card.title}</div>
-      <div>{card.description}</div>
-      <div>{card.due_date}</div>
-
+      <div>{card.title || "Без названия"}</div>
+      {card.description && <div>{card.description}</div>}{" "}
+      {/* не рендерим пустые блоки */}
+      {card.due_date && <div>{card.due_date}</div>}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -34,7 +40,6 @@ function CardItem({ card, onEdit }) {
       >
         Edit
       </button>
-
       <button
         onClick={(e) => {
           e.stopPropagation();
