@@ -3,13 +3,11 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { fetchColumns, createColumn } from "../store/columnsSlice";
-import { fetchCards } from "../store/cardsSlice";
+import { fetchCards, moveCard } from "../store/cardsSlice";
 import { fetchBoards } from "../store/boardsSlice";
 
 import ColumnItem from "../components/board/ColumnItem";
 import CardModal from "../components/board/CardModal";
-// Добавьте, если ещё нет:
-import { moveCard } from "../store/cardsSlice";
 
 import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
 
@@ -56,7 +54,7 @@ function Board() {
     setActiveCard(null);
 
     if (!over) return;
-    if (active.id === over.id) return;
+    //if (active.id === over.id) return;
 
     const draggedCard = cards.find((c) => c.id === active.id);
     if (!draggedCard) return;
@@ -76,22 +74,32 @@ function Board() {
         .sort((a, b) => a.position - b.position);
       newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
     } else {
-      // бросили на пустую колонку — встаём в конец
+      // бросили на пустую колонку - встаём в конец
       newColumnId = Number(over.id);
       const cardsInColumn = cards
         .filter((c) => c.column_id === newColumnId)
         .sort((a, b) => a.position - b.position);
       newPosition = cardsInColumn.length;
     }
+    if (!newColumnId && newColumnId !== 0) return;
 
-    await dispatch(
-      moveCard({ cardId: active.id, newColumn: newColumnId, newPosition }),
-    );
+    try {
+      await dispatch(
+        moveCard({
+          cardId: active.id,
+          newColumn: newColumnId,
+          newPosition,
+        }),
+      );
 
-    // обновляем карточки в затронутых колонках
-    dispatch(fetchCards(newColumnId));
-    if (oldColumnId !== newColumnId) {
-      dispatch(fetchCards(oldColumnId));
+      // обновляем новую колонку
+      dispatch(fetchCards(newColumnId));
+
+      if (oldColumnId !== newColumnId) {
+        dispatch(fetchCards(oldColumnId));
+      }
+    } catch (e) {
+      console.error("Ошибка перемещения:", e);
     }
   };
 

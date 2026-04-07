@@ -56,9 +56,6 @@ function ColumnItem({ column, cards, onEditCard }) {
           autoFocus
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleUpdateColumn}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleUpdateColumn();
-          }}
         />
       ) : (
         <>
@@ -103,7 +100,7 @@ function ColumnItem({ column, cards, onEditCard }) {
           onChange={(e) => setNewCard({ ...newCard, due_date: e.target.value })}
         />
         <button onClick={handleCreateCard}>Add card</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="error">{error}</p>}
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { boards, loading } = useSelector((state) => state.boards);
+  const { boards, loading, error } = useSelector((state) => state.boards);
   const { user } = useSelector((state) => state.user);
 
   const [newBoardTitle, setNewBoardTitle] = useState("");
@@ -24,7 +24,6 @@ function Home() {
 
   const handleCreateBoard = () => {
     if (!newBoardTitle.trim()) {
-      alert("Введите название");
       return;
     }
     dispatch(createBoard({ title: newBoardTitle, userId: user.id }));
@@ -32,6 +31,7 @@ function Home() {
   };
 
   if (loading) return <div>Загрузка...</div>;
+  if (error) return <div style={{ color: "red" }}>{error}</div>;
 
   return (
     <div>

@@ -11,10 +11,7 @@ function Auth() {
   const { loading, error } = useSelector((state) => state.user);
 
   const handleLogin = async () => {
-    if (!username.trim()) {
-      alert("Введите имя");
-      return;
-    }
+    if (!username.trim()) return;
 
     const result = await dispatch(loginUser(username));
 

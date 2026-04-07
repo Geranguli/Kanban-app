@@ -31,9 +31,12 @@ function BoardItem({ board }) {
       ) : (
         <>
           {/* клик по названию - переход на страницу доски */}
-          <button onClick={() => navigate(`/boards/${board.id}`)}>
+          <span
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate(`/boards/${board.id}`)}
+          >
             {board.title}
-          </button>
+          </span>
           <button onClick={() => setEditing(true)}>edit</button>
           <button onClick={() => dispatch(deleteBoard(board.id))}>
             delete
