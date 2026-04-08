@@ -57,7 +57,7 @@ class CardImage(Base):
     __tablename__ = "card_images"
 
     id = Column(Integer, primary_key=True)
-    file_path = Column(String, nullable=False)
+    url = Column(String, nullable=False)
 
     card_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
 

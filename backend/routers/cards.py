@@ -208,8 +208,8 @@ def delete_image(image_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Изображение не найдено")
 
     # удалить файл с диска
-    if os.path.exists(image.file_path):
-        os.remove(image.file_path)
+    if os.path.exists(image.url):
+        os.remove(image.url)
 
     db.delete(image)
     db.commit()

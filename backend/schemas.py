@@ -14,7 +14,7 @@ class UserResponse(BaseModel):
 #image
 class ImageResponse(BaseModel):
     id: int
-    file_path: str
+    url: str
 
     model_config = ConfigDict(from_attributes=True)
 

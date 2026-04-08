@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { updateCard } from "../../store/cardsSlice";
+import { updateCard, uploadImages, deleteImage } from "../../store/cardsSlice";
 
 function CardModal({ card, onClose }) {
   const dispatch = useDispatch();
@@ -10,6 +10,7 @@ function CardModal({ card, onClose }) {
     description: "",
     due_date: "",
   });
+  const [newImages, setNewImages] = useState([]);
 
   // заполняем форму данными карточки при открытии
   useEffect(() => {
@@ -19,6 +20,7 @@ function CardModal({ card, onClose }) {
         description: card.description || "",
         due_date: card.due_date || "",
       });
+      setNewImages([]);
     }
   }, [card]);
 
@@ -33,6 +35,15 @@ function CardModal({ card, onClose }) {
         },
       }),
     );
+    if (newImages.length > 0) {
+      dispatch(
+        uploadImages({
+          cardId: card.id,
+          files: newImages,
+        }),
+      );
+    }
+
     onClose();
   };
 
@@ -91,6 +102,61 @@ function CardModal({ card, onClose }) {
             setFormData({ ...formData, due_date: e.target.value })
           }
         />
+
+        <div>
+          <h4>Images</h4>
+
+          {card.images && card.images.length > 0 ? (
+            card.images.map((img) => (
+              <div key={img.id} style={{ marginBottom: "10px" }}>
+                <img
+                  src={`http://localhost:8000/${img.url}`}
+                  alt=""
+                  style={{ width: "100px", borderRadius: "6px" }}
+                />
+
+                <button
+                  onClick={() => dispatch(deleteImage(img.id))} // NEW
+                >
+                  Delete
+                </button>
+              </div>
+            ))
+          ) : (
+            <p>No images</p>
+          )}
+        </div>
+
+        {/*загрузка новых изображений */}
+        <div>
+          <h4>Add images</h4>
+
+          <input
+            type="file"
+            multiple
+            onChange={
+              (e) => setNewImages(Array.from(e.target.files)) // NEW
+            }
+          />
+
+          {/* предпросмотр */}
+          {newImages.length > 0 && (
+            <div style={{ marginTop: "10px" }}>
+              {newImages.map((file, index) => (
+                <img
+                  key={index}
+                  src={URL.createObjectURL(file)}
+                  alt=""
+                  style={{
+                    width: "80px",
+                    marginRight: "5px",
+                    borderRadius: "6px",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
         <button onClick={handleSave}>Save</button>
         <button onClick={onClose}>Cancel</button>

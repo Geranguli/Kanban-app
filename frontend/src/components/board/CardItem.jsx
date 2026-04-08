@@ -53,6 +53,18 @@ function CardItem({ card, onEdit }) {
       >
         Delete
       </button>
+      {card.images && card.images.length > 0 && (
+        <div className="card-images">
+          {card.images.map((img) => (
+            <img
+              key={img.id}
+              src={`http://localhost:8000/${img.url}`}
+              alt=""
+              style={{ width: "100%", borderRadius: "6px" }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

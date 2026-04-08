@@ -49,6 +49,33 @@ export const updateCard = createAsyncThunk(
   },
 );
 
+//добавить изображение
+export const uploadImages = createAsyncThunk(
+  "cards/uploadImages",
+  async ({ cardId, files }) => {
+    const formData = new FormData();
+
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    const res = await api.post(`/cards/${cardId}/images`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return res.data;
+  },
+);
+
+//удалить изображение
+export const deleteImage = createAsyncThunk(
+  "cards/deleteImage",
+  async (imageId) => {
+    await api.delete(`/cards/images/${imageId}`);
+    return imageId;
+  },
+);
+
 const cardsSlice = createSlice({
   name: "cards",
   initialState: {
@@ -91,6 +118,13 @@ const cardsSlice = createSlice({
       .addCase(updateCard.fulfilled, (state, action) => {
         const index = state.cards.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) state.cards[index] = action.payload;
+      })
+      .addCase(uploadImages.fulfilled, (state, action) => {
+        const updatedCard = action.payload;
+        const index = state.cards.findIndex((c) => c.id === updatedCard.id);
+        if (index !== -1) {
+          state.cards[index] = updatedCard;
+        }
       })
       //обновляем карточки после перемещения
       .addCase(moveCard.fulfilled, (state, action) => {
