@@ -25,11 +25,16 @@ function CardItem({ card, onEdit }) {
   return (
     <div ref={setNodeRef} style={style}>
       {/* область для перетаскивания */}
-      <div {...attributes} {...listeners} style={{ cursor: "grab" }}>
+      <div
+        {...attributes}
+        {...listeners}
+        style={{ cursor: "grab" }}
+        onClick={(e) => e.stopPropagation()} //чтобы drag не конфликтовал с кликами
+      >
         ⠿
       </div>
       <div>{card.title || "Без названия"}</div>
-      {card.description && <div>{card.description}</div>}{" "}
+      {card.description && <div>{card.description}</div>}
       {/* не рендерим пустые блоки */}
       {card.due_date && <div>{card.due_date}</div>}
       <button

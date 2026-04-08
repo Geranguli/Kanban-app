@@ -11,6 +11,13 @@ class UserResponse(BaseModel):
     username: str
     model_config = ConfigDict(from_attributes=True)
 
+#image
+class ImageResponse(BaseModel):
+    id: int
+    file_path: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 # Card
 
 class CardBase(BaseModel):
@@ -32,6 +39,8 @@ class CardUpdate(BaseModel):
 class CardResponse(CardBase):
     id: int
     column_id: Optional[int] = None
+    images: List[ImageResponse] = []
+
     model_config = ConfigDict(from_attributes=True)
 
 #для drag_and_drop

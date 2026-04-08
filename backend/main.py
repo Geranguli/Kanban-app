@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from models import User, Board, KanbanColumn, Card
 from routers import boards, users, columns, cards
+from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI()
 
@@ -14,6 +16,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/")
 def read_root():

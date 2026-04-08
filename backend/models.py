@@ -46,3 +46,19 @@ class Card(Base):
     position = Column(Integer) # порядок карточки в колонке
     # много карточек - 1 колонка
     column = relationship("KanbanColumn", back_populates="cards")
+
+    images = relationship(
+        "CardImage",
+        back_populates="card",
+        cascade="all, delete-orphan"
+    )
+
+class CardImage(Base):
+    __tablename__ = "card_images"
+
+    id = Column(Integer, primary_key=True)
+    file_path = Column(String, nullable=False)
+
+    card_id = Column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
+
+    card = relationship("Card", back_populates="images")

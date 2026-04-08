@@ -56,10 +56,10 @@ function Board() {
     if (!over) return;
     //if (active.id === over.id) return;
 
-    const draggedCard = cards.find((c) => c.id === active.id);
-    if (!draggedCard) return;
+    const activeCard = cards.find((c) => c.id === active.id);
+    if (!activeCard) return;
 
-    const oldColumnId = draggedCard.column_id;
+    //const oldColumnId = draggedCard.column_id;
 
     let newColumnId;
     let newPosition;
@@ -95,8 +95,8 @@ function Board() {
       // обновляем новую колонку
       dispatch(fetchCards(newColumnId));
 
-      if (oldColumnId !== newColumnId) {
-        dispatch(fetchCards(oldColumnId));
+      if (activeCard.column_id !== newColumnId) {
+        dispatch(fetchCards(activeCard.column_id));
       }
     } catch (e) {
       console.error("Ошибка перемещения:", e);

@@ -1,11 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from database import get_db
 from sqlalchemy import select, delete, func
-from models import KanbanColumn, Card
+from models import KanbanColumn, Card, CardImage
 from schemas import CardCreate, CardUpdate, CardResponse, CardMove
 from typing import List
 from datetime import date, datetime
+import os
+import uuid
+
+UPLOAD_DIR = "uploads"
+
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
 
 def is_valid_date(date_obj):
     try:
@@ -166,3 +173,45 @@ def move_card(card_id: int, move: CardMove, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_card)
     return db_card
+
+from models import CardImage
+
+@router.post("/{card_id}/images", response_model=CardResponse)
+def upload_images(
+    card_id: int,
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db)
+):
+    card = db.scalar(select(Card).where(Card.id == card_id))
+    if not card:
+        raise HTTPException(status_code=404, detail="Карточка не найдена")
+
+    for file in files:
+        filename = f"{uuid.uuid4()}_{file.filename}"  # уникальное имя
+        filepath = os.path.join(UPLOAD_DIR, filename)
+
+        with open(filepath, "wb") as buffer:
+            buffer.write(file.file.read())
+
+        image = CardImage(url=filepath, card_id=card_id)
+        db.add(image)
+
+    db.commit()
+    db.refresh(card)
+
+    return card
+
+@router.delete("/images/{image_id}")
+def delete_image(image_id: int, db: Session = Depends(get_db)):
+    image = db.scalar(select(CardImage).where(CardImage.id == image_id))
+    if not image:
+        raise HTTPException(status_code=404, detail="Изображение не найдено")
+
+    # удалить файл с диска
+    if os.path.exists(image.file_path):
+        os.remove(image.file_path)
+
+    db.delete(image)
+    db.commit()
+
+    return {"message": "Изображение удалено"}
