@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchBoards, createBoard } from "../store/boardsSlice";
+import {
+  fetchBoards,
+  createBoard,
+  deleteAllBoards,
+} from "../store/boardsSlice";
 import BoardItem from "../components/boards/BoardItem";
 import { logout } from "../store/userSlice";
 
@@ -11,6 +15,7 @@ function Home() {
 
   const { boards, loading, error } = useSelector((state) => state.boards);
   const { user } = useSelector((state) => state.user);
+  const [search, setSearch] = useState("");
 
   const [newBoardTitle, setNewBoardTitle] = useState("");
 
@@ -31,10 +36,21 @@ function Home() {
     setNewBoardTitle("");
   };
 
+  const handleDeleteAll = () => {
+    if (!user) return;
+
+    const confirmDelete = window.confirm("Удалить все доски?");
+    if (!confirmDelete) return;
+
+    dispatch(deleteAllBoards(user.id));
+  };
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
   };
+  const filteredBoards = boards.filter((board) =>
+    board.title.toLowerCase().includes(search.toLowerCase()),
+  );
 
   if (loading) return <div>Загрузка...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -45,7 +61,19 @@ function Home() {
 
       <button onClick={handleLogout}>Выйти</button>
 
-      {boards.map((board) => (
+      <div style={{ marginBottom: "10px" }}>
+        {/* поиск */}
+        <input
+          placeholder="Поиск доски..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        {/*удалить все */}
+        <button onClick={handleDeleteAll}>Удалить все доски</button>
+      </div>
+
+      {filteredBoards.map((board) => (
         <BoardItem key={board.id} board={board} />
       ))}
 

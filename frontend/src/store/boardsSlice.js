@@ -28,6 +28,15 @@ export const deleteBoard = createAsyncThunk(
   },
 );
 
+// удалить все доски
+export const deleteAllBoards = createAsyncThunk(
+  "boards/deleteAllBoards",
+  async (userId) => {
+    await api.delete(`/boards/?user_id=${userId}`);
+    return userId;
+  },
+);
+
 // переименовать доску
 export const updateBoard = createAsyncThunk(
   "boards/updateBoard",
@@ -64,6 +73,9 @@ const boardsSlice = createSlice({
       })
       .addCase(deleteBoard.fulfilled, (state, action) => {
         state.boards = state.boards.filter((b) => b.id !== action.payload);
+      })
+      .addCase(deleteAllBoards.fulfilled, (state) => {
+        state.boards = []; // очищаем список
       })
       .addCase(updateBoard.fulfilled, (state, action) => {
         const index = state.boards.findIndex((b) => b.id === action.payload.id);
