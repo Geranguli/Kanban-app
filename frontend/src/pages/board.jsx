@@ -6,6 +6,8 @@ import { fetchColumns, createColumn } from "../store/columnsSlice";
 import { fetchCards, moveCard } from "../store/cardsSlice";
 import { fetchBoards } from "../store/boardsSlice";
 
+import { useNavigate } from "react-router-dom";
+
 import ColumnItem from "../components/board/ColumnItem";
 import CardModal from "../components/board/CardModal";
 
@@ -14,6 +16,8 @@ import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
 function Board() {
   const { id } = useParams();
   const dispatch = useDispatch();
+
+  const navigate = useNavigate();
 
   const { columns } = useSelector((state) => state.columns);
   const { cards, loading, error } = useSelector((state) => state.cards);
@@ -109,6 +113,8 @@ function Board() {
   return (
     <div>
       <h1>{board ? board.title : "..."}</h1>
+
+      <button onClick={() => navigate("/")}>Назад</button>
 
       <DndContext
         collisionDetection={closestCenter}

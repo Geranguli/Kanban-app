@@ -24,11 +24,14 @@ function CardItem({ card, onEdit }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1, // карточка полупрозрачна во время перетаскивания
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="card">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`card ${isDragging ? "dragging" : ""}`}
+    >
       {/* область для перетаскивания */}
       <div
         {...attributes}

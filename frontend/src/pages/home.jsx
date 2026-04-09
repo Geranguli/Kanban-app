@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBoards, createBoard } from "../store/boardsSlice";
 import BoardItem from "../components/boards/BoardItem";
+import { logout } from "../store/userSlice";
 
 function Home() {
   const dispatch = useDispatch();
@@ -30,12 +31,19 @@ function Home() {
     setNewBoardTitle("");
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
   if (loading) return <div>Загрузка...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
 
   return (
     <div>
       <h2>Доски</h2>
+
+      <button onClick={handleLogout}>Выйти</button>
 
       {boards.map((board) => (
         <BoardItem key={board.id} board={board} />
