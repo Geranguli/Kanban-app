@@ -54,16 +54,14 @@ function Board() {
     setActiveCard(null);
 
     if (!over) return;
-    //if (active.id === over.id) return;
 
     const activeCard = cards.find((c) => c.id === active.id);
     if (!activeCard) return;
 
-    //const oldColumnId = draggedCard.column_id;
-
     let newColumnId;
     let newPosition;
 
+    const overData = over.data?.current;
     const overCard = cards.find((c) => c.id === over.id);
 
     if (overCard) {
@@ -73,15 +71,17 @@ function Board() {
         .filter((c) => c.column_id === newColumnId)
         .sort((a, b) => a.position - b.position);
       newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
-    } else {
+    } else if (overData?.type === "column") {
       // бросили на пустую колонку - встаём в конец
       newColumnId = Number(over.id);
       const cardsInColumn = cards
         .filter((c) => c.column_id === newColumnId)
         .sort((a, b) => a.position - b.position);
       newPosition = cardsInColumn.length;
+    } else {
+      return;
     }
-    if (!newColumnId && newColumnId !== 0) return;
+    //if (!newColumnId && newColumnId !== 0) return;
 
     try {
       await dispatch(
@@ -115,7 +115,7 @@ function Board() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div style={{ display: "flex", gap: 20 }}>
+        <div className="board">
           {columns.map((column) => (
             <ColumnItem
               key={column.id}
@@ -130,11 +130,11 @@ function Board() {
 
         {/* показываем карточку под курсором во время перетаскивания */}
         <DragOverlay>
-          {activeCard ? <div>{activeCard.title}</div> : null}
+          {activeCard ? <div className="card">{activeCard.title}</div> : null}
         </DragOverlay>
       </DndContext>
 
-      <div>
+      <div className="form">
         <input
           value={newColumnTitle}
           onChange={(e) => setNewColumnTitle(e.target.value)}

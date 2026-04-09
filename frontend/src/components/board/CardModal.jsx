@@ -52,33 +52,9 @@ function CardModal({ card, onClose }) {
 
   return (
     // клик по фону закрывает модалку
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "rgba(0,0,0,0.3)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
+    <div onClick={onClose} className="modal-overlay">
       {/* клик внутри окна не закрывает его */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "white",
-          padding: 20,
-          borderRadius: 8,
-          width: 320,
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
-      >
+      <div onClick={(e) => e.stopPropagation()} className="modal">
         <h3>Edit card</h3>
 
         <input
@@ -115,9 +91,7 @@ function CardModal({ card, onClose }) {
                   style={{ width: "100px", borderRadius: "6px" }}
                 />
 
-                <button
-                  onClick={() => dispatch(deleteImage(img.id))} // NEW
-                >
+                <button onClick={() => dispatch(deleteImage(img.id))}>
                   Delete
                 </button>
               </div>
@@ -139,7 +113,6 @@ function CardModal({ card, onClose }) {
             }
           />
 
-          {/* предпросмотр */}
           {newImages.length > 0 && (
             <div style={{ marginTop: "10px" }}>
               {newImages.map((file, index) => (

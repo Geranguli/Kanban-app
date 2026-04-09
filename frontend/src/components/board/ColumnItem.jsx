@@ -13,7 +13,10 @@ function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
 
   // делаем колонку drop-зоной для карточек
-  const { setNodeRef } = useDroppable({ id: column.id });
+  const { setNodeRef } = useDroppable({
+    id: column.id,
+    data: { type: "column" },
+  });
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
@@ -49,7 +52,7 @@ function ColumnItem({ column, cards, onEditCard }) {
   };
 
   return (
-    <div ref={setNodeRef}>
+    <div ref={setNodeRef} className="column" style={{ minHeight: "150px" }}>
       {editing ? (
         <input
           value={title}
@@ -77,7 +80,7 @@ function ColumnItem({ column, cards, onEditCard }) {
         ))}
       </SortableContext>
 
-      <div>
+      <div className="form">
         <input
           placeholder="Title"
           value={newCard.title}

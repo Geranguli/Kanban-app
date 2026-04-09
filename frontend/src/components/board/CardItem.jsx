@@ -14,7 +14,12 @@ function CardItem({ card, onEdit }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: card.id });
+  } = useSortable({
+    id: card.id,
+    data: {
+      type: "card",
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -23,7 +28,7 @@ function CardItem({ card, onEdit }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className="card">
       {/* область для перетаскивания */}
       <div
         {...attributes}
