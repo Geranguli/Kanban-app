@@ -37,12 +37,6 @@ def create_card(card: CardCreate, column_id: int, db: Session = Depends(get_db))
     max_position = db.scalar(max_position_stmt)
     new_position = 0 if max_position is None else max_position + 1
 
-    if card.due_date:
-        if not is_valid_date(card.due_date):
-            raise HTTPException(status_code=400, detail="Некорректная дата")
-        if card.due_date < date.today():
-            raise HTTPException(status_code=400, detail="Дата выполнения не может быть в прошлом")
-
     db_card = Card(
         title=card.title,
         description=card.description,

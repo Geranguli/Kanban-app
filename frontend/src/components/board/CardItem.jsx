@@ -26,6 +26,7 @@ function CardItem({ card, onEdit }) {
     transition,
   };
 
+  const isOverdue = card.due_date && new Date(card.due_date) < new Date();
   return (
     <div
       ref={setNodeRef}
@@ -44,7 +45,9 @@ function CardItem({ card, onEdit }) {
       <div>{card.title || "Без названия"}</div>
       {card.description && <div>{card.description}</div>}
       {/* не рендерим пустые блоки */}
-      {card.due_date && <div>{card.due_date}</div>}
+      {card.due_date && (
+        <div className={isOverdue ? "overdue" : ""}>{card.due_date}</div>
+      )}
       <button
         onClick={(e) => {
           e.stopPropagation();

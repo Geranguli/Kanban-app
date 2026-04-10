@@ -22,6 +22,7 @@ function Board() {
   const { columns } = useSelector((state) => state.columns);
   const { cards, loading, error } = useSelector((state) => state.cards);
   const { boards } = useSelector((state) => state.boards);
+  const { user } = useSelector((state) => state.user);
 
   const board = boards.find((b) => b.id === Number(id));
 
@@ -40,6 +41,13 @@ function Board() {
       dispatch(fetchCards(column.id));
     });
   }, [dispatch, columns]);
+
+  //доски подгружаются после перезагрузки
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchBoards(user.id));
+    }
+  }, [dispatch, user]);
 
   const handleCreateColumn = () => {
     if (!newColumnTitle.trim()) return;
@@ -112,7 +120,7 @@ function Board() {
 
   return (
     <div>
-      <h1>{board ? board.title : "..."}</h1>
+      <h1>{board?.title || "Загрузка..."}</h1>
 
       <button onClick={() => navigate("/")}>Назад</button>
 

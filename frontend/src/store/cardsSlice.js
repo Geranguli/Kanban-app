@@ -100,17 +100,21 @@ const cardsSlice = createSlice({
         state.loading = false;
         state.error = "Ошибка загрузки карточек";
       })
-      .addCase(createCard.pending, (state) => {
+      /*.addCase(createCard.pending, (state) => {
         state.loading = true;
         state.error = null;
-      })
+      })*/
       .addCase(createCard.fulfilled, (state, action) => {
-        state.loading = false;
+        //state.loading = false;
+        //state.error = null;
         state.cards.push(action.payload);
       })
       .addCase(createCard.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error?.message || "Невозможно создать карточку";
+        state.error =
+          //action.error?.message ||
+          action.payload;
+        //"Невозможно создать карточку";
       })
       .addCase(deleteCard.fulfilled, (state, action) => {
         state.cards = state.cards.filter((c) => c.id !== action.payload);

@@ -63,3 +63,8 @@
   border-radius: 6px;
   width: 300px;
 }
+
+.overdue {
+  color: red;
+  font-weight: bold;
+}
