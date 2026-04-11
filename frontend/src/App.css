@@ -26,6 +26,12 @@
   border-radius: 6px;
   margin-bottom: 8px;
   border: 1px solid #ccc;
+
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.02);
 }
 
 /* При перетаскивании */
@@ -67,4 +73,13 @@
 .overdue {
   color: red;
   font-weight: bold;
+}
+
+.dragging-preview {
+  background: white;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  max-width: 250px;
 }

@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import ColumnItem from "../components/board/ColumnItem";
 import CardModal from "../components/board/CardModal";
 
-import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
+import { DndContext, pointerWithin, DragOverlay } from "@dnd-kit/core";
 
 function Board() {
   const { id } = useParams();
@@ -65,6 +65,7 @@ function Board() {
     const { active, over } = event;
     setActiveCard(null);
 
+    //если бросили вне зоны ничего не делаем
     if (!over) return;
 
     const activeCard = cards.find((c) => c.id === active.id);
@@ -82,7 +83,24 @@ function Board() {
       const cardsInColumn = cards
         .filter((c) => c.column_id === newColumnId)
         .sort((a, b) => a.position - b.position);
-      newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
+      const overIndex = cardsInColumn.findIndex((c) => c.id === over.id);
+      //newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
+
+      const oldIndex = cards
+        .filter((c) => c.column_id === activeCard.column_id)
+        .sort((a, b) => a.position - b.position)
+        .findIndex((c) => c.id === activeCard.id);
+
+      if (activeCard.column_id === newColumnId) {
+        if (oldIndex < overIndex) {
+          newPosition = overIndex; // движение вниз
+        } else {
+          newPosition = overIndex; // движение вверх
+        }
+      } else {
+        // перемещение между колонками
+        newPosition = overIndex;
+      }
     } else if (overData?.type === "column") {
       // бросили на пустую колонку - встаём в конец
       newColumnId = overData.columnId;
@@ -93,12 +111,18 @@ function Board() {
     } else {
       return;
     }
+    const oldIndex = cards
+      .filter((c) => c.column_id === activeCard.column_id)
+      .sort((a, b) => a.position - b.position)
+      .findIndex((c) => c.id === activeCard.id);
+
     //ничего не изменилось
     if (
       activeCard.column_id === newColumnId &&
-      activeCard.position === newPosition
+      oldIndex === newPosition
+      //activeCard.position === newPosition
     ) {
-      newPosition -= 1;
+      return;
     }
     //новое обновление
     dispatch(
@@ -135,7 +159,7 @@ function Board() {
       <button onClick={() => navigate("/")}>Назад</button>
 
       <DndContext
-        collisionDetection={closestCenter}
+        collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -154,7 +178,9 @@ function Board() {
 
         {/* показываем карточку под курсором во время перетаскивания */}
         <DragOverlay>
-          {activeCard ? <div className="card">{activeCard.title}</div> : null}
+          {activeCard ? (
+            <div className="card dragging-preview">{activeCard.title}</div>
+          ) : null}
         </DragOverlay>
       </DndContext>
 
