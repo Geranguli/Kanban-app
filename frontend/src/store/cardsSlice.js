@@ -83,6 +83,52 @@ const cardsSlice = createSlice({
     loading: false,
     error: null,
   },
+  reducers: {
+    moveCardOptimistic(state, action) {
+      const { cardId, newColumn, newPosition } = action.payload;
+
+      const card = state.cards.find((c) => c.id === cardId);
+      if (!card) return;
+
+      const oldColumn = card.column_id;
+      const oldPosition = card.position;
+
+      const sameColumn = oldColumn === newColumn;
+
+      if (sameColumn) {
+        state.cards.forEach((c) => {
+          if (c.column_id !== oldColumn || c.id === cardId) return;
+
+          // вверх
+          if (newPosition < oldPosition) {
+            if (c.position >= newPosition && c.position < oldPosition) {
+              c.position += 1;
+            }
+          }
+          // вниз
+          else if (newPosition > oldPosition) {
+            if (c.position <= newPosition && c.position > oldPosition) {
+              c.position -= 1;
+            }
+          }
+        });
+      } else {
+        // разные колонки
+        state.cards.forEach((c) => {
+          if (c.column_id === newColumn && c.position >= newPosition) {
+            c.position += 1;
+          }
+          if (c.column_id === oldColumn && c.position > oldPosition) {
+            c.position -= 1;
+          }
+        });
+      }
+
+      card.column_id = newColumn;
+      card.position = newPosition;
+    },
+  },
+
   extraReducers: (builder) => {
     builder
       .addCase(fetchCards.pending, (state) => {
@@ -137,5 +183,7 @@ const cardsSlice = createSlice({
       });
   },
 });
+
+export const { moveCardOptimistic } = cardsSlice.actions;
 
 export default cardsSlice.reducer;

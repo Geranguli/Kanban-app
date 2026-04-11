@@ -13,11 +13,13 @@ function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
 
   // делаем колонку drop-зоной для карточек
-  const { setNodeRef } = useDroppable({
-    id: column.id,
-    data: { type: "column" },
+  const { setNodeRef, isOver } = useDroppable({
+    id: `column-${column.id}`,
+    data: {
+      type: "column",
+      columnId: column.id,
+    },
   });
-
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
 
@@ -52,7 +54,16 @@ function ColumnItem({ column, cards, onEditCard }) {
   };
 
   return (
-    <div ref={setNodeRef} className="column" style={{ minHeight: "150px" }}>
+    <div
+      ref={setNodeRef}
+      className="column"
+      style={{
+        minHeight: "150px",
+        background: isOver ? "#e3f2fd" : "#f4f5f7",
+        padding: "10px",
+        borderRadius: "8px",
+      }}
+    >
       {editing ? (
         <input
           value={title}

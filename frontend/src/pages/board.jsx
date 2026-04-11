@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { fetchColumns, createColumn } from "../store/columnsSlice";
-import { fetchCards, moveCard } from "../store/cardsSlice";
+import { fetchCards, moveCard, moveCardOptimistic } from "../store/cardsSlice";
 import { fetchBoards } from "../store/boardsSlice";
 
 import { useNavigate } from "react-router-dom";
@@ -85,7 +85,7 @@ function Board() {
       newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
     } else if (overData?.type === "column") {
       // бросили на пустую колонку - встаём в конец
-      newColumnId = Number(over.id);
+      newColumnId = overData.columnId;
       const cardsInColumn = cards
         .filter((c) => c.column_id === newColumnId)
         .sort((a, b) => a.position - b.position);
@@ -93,7 +93,21 @@ function Board() {
     } else {
       return;
     }
-    //if (!newColumnId && newColumnId !== 0) return;
+    //ничего не изменилось
+    if (
+      activeCard.column_id === newColumnId &&
+      activeCard.position === newPosition
+    ) {
+      newPosition -= 1;
+    }
+    //новое обновление
+    dispatch(
+      moveCardOptimistic({
+        cardId: active.id,
+        newColumn: newColumnId,
+        newPosition,
+      }),
+    );
 
     try {
       await dispatch(
@@ -102,16 +116,12 @@ function Board() {
           newColumn: newColumnId,
           newPosition,
         }),
-      );
-
-      // обновляем новую колонку
-      dispatch(fetchCards(newColumnId));
-
-      if (activeCard.column_id !== newColumnId) {
-        dispatch(fetchCards(activeCard.column_id));
-      }
+      ).unwrap();
     } catch (e) {
       console.error("Ошибка перемещения:", e);
+
+      dispatch(fetchCards(activeCard.column_id));
+      dispatch(fetchCards(newColumnId));
     }
   };
 
