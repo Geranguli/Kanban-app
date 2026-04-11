@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from models import KanbanColumn, Board
 from schemas import ColumnCreate, ColumnUpdate, ColumnResponse
 from typing import List
@@ -22,8 +22,14 @@ def create_column(
     board = db.scalars(stmt).first()
     if not board:
         raise HTTPException(status_code=404, detail="Доска не найдена")
+    
+    max_pos = db.scalar(
+        select(func.max(KanbanColumn.position))
+        .where(KanbanColumn.board_id == board_id)
+    )
+    new_position = 0 if max_pos is None else max_pos + 1
 
-    db_column = KanbanColumn(title=column.title, board_id=board_id)
+    db_column = KanbanColumn(title=column.title, board_id=board_id, position = new_position)
     db.add(db_column)
     db.commit()
     db.refresh(db_column)

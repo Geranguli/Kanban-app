@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { fetchColumns, createColumn } from "../store/columnsSlice";
@@ -29,6 +29,24 @@ function Board() {
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [editingCard, setEditingCard] = useState(null);
   const [activeCard, setActiveCard] = useState(null);
+
+  const cardsByColumn = useMemo(() => {
+    const map = {};
+
+    cards.forEach((card) => {
+      if (!map[card.column_id]) {
+        map[card.column_id] = [];
+      }
+      map[card.column_id].push(card);
+    });
+
+    //сортируем один раз
+    Object.values(map).forEach((arr) =>
+      arr.sort((a, b) => a.position - b.position),
+    );
+
+    return map;
+  }, [cards]);
 
   // загружаем колонки при открытии доски
   useEffect(() => {
@@ -80,48 +98,26 @@ function Board() {
     if (overCard) {
       // бросили на другую карточку - встаём перед ней
       newColumnId = overCard.column_id;
-      const cardsInColumn = cards
-        .filter((c) => c.column_id === newColumnId)
-        .sort((a, b) => a.position - b.position);
+
+      const cardsInColumn = cardsByColumn[newColumnId] || [];
       const overIndex = cardsInColumn.findIndex((c) => c.id === over.id);
-      //newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
 
-      const oldIndex = cards
-        .filter((c) => c.column_id === activeCard.column_id)
-        .sort((a, b) => a.position - b.position)
-        .findIndex((c) => c.id === activeCard.id);
-
-      if (activeCard.column_id === newColumnId) {
-        if (oldIndex < overIndex) {
-          newPosition = overIndex; // движение вниз
-        } else {
-          newPosition = overIndex; // движение вверх
-        }
-      } else {
-        // перемещение между колонками
-        newPosition = overIndex;
-      }
+      newPosition = overIndex;
     } else if (overData?.type === "column") {
       // бросили на пустую колонку - встаём в конец
       newColumnId = overData.columnId;
-      const cardsInColumn = cards
-        .filter((c) => c.column_id === newColumnId)
-        .sort((a, b) => a.position - b.position);
+
+      const cardsInColumn = cardsByColumn[newColumnId] || [];
       newPosition = cardsInColumn.length;
     } else {
       return;
     }
-    const oldIndex = cards
-      .filter((c) => c.column_id === activeCard.column_id)
-      .sort((a, b) => a.position - b.position)
-      .findIndex((c) => c.id === activeCard.id);
+    const oldIndex = (cardsByColumn[activeCard.column_id] || []).findIndex(
+      (c) => c.id === activeCard.id,
+    );
 
     //ничего не изменилось
-    if (
-      activeCard.column_id === newColumnId &&
-      oldIndex === newPosition
-      //activeCard.position === newPosition
-    ) {
+    if (activeCard.column_id === newColumnId && oldIndex === newPosition) {
       return;
     }
     //новое обновление
@@ -168,9 +164,7 @@ function Board() {
             <ColumnItem
               key={column.id}
               column={column}
-              cards={cards
-                .filter((c) => c.column_id === column.id)
-                .sort((a, b) => a.position - b.position)}
+              cards={cardsByColumn[column.id] || []}
               onEditCard={setEditingCard}
             />
           ))}
