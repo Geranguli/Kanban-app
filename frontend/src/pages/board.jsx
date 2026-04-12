@@ -1,13 +1,9 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { fetchColumns, createColumn } from "../store/columnsSlice";
 import { fetchCards, moveCard, moveCardOptimistic } from "../store/cardsSlice";
 import { fetchBoards } from "../store/boardsSlice";
-
-import { useNavigate } from "react-router-dom";
-
 import ColumnItem from "../components/board/ColumnItem";
 import CardModal from "../components/board/CardModal";
 
@@ -19,8 +15,13 @@ function Board() {
 
   const navigate = useNavigate();
 
-  const { columns } = useSelector((state) => state.columns);
-  const { cards, loading, error } = useSelector((state) => state.cards);
+  //разделяем состояния карточек и колонок
+  const {
+    columns,
+    loading: columnsLoading,
+    error: columnsError,
+  } = useSelector((state) => state.columns);
+  const { cards } = useSelector((state) => state.cards);
   const { boards } = useSelector((state) => state.boards);
   const { user } = useSelector((state) => state.user);
 
@@ -30,6 +31,7 @@ function Board() {
   const [editingCard, setEditingCard] = useState(null);
   const [activeCard, setActiveCard] = useState(null);
 
+  //группируем карточки по колонкам и сортируем
   const cardsByColumn = useMemo(() => {
     const map = {};
 
@@ -48,10 +50,17 @@ function Board() {
     return map;
   }, [cards]);
 
+  //загрузка колонок
+  const loadColumns = useCallback(() => {
+    if (id) {
+      dispatch(fetchColumns(id));
+    }
+  }, [dispatch, id]);
+
   // загружаем колонки при открытии доски
   useEffect(() => {
-    dispatch(fetchColumns(id));
-  }, [dispatch, id]);
+    loadColumns();
+  }, [loadColumns]);
 
   // загружаем карточки для каждой колонки
   useEffect(() => {
@@ -76,7 +85,7 @@ function Board() {
   // запоминаем карточку которую начали тащить
   const handleDragStart = (event) => {
     const card = cards.find((c) => c.id === event.active.id);
-    setActiveCard(card);
+    setActiveCard(card); //сохраняем карточку для dragoverlay
   };
 
   const handleDragEnd = async (event) => {
@@ -89,9 +98,9 @@ function Board() {
     const activeCard = cards.find((c) => c.id === active.id);
     if (!activeCard) return;
 
+    //новая колонка и позиция
     let newColumnId;
     let newPosition;
-
     const overData = over.data?.current;
     const overCard = cards.find((c) => c.id === over.id);
 
@@ -106,17 +115,17 @@ function Board() {
     } else if (overData?.type === "column") {
       // бросили на пустую колонку - встаём в конец
       newColumnId = overData.columnId;
-
       const cardsInColumn = cardsByColumn[newColumnId] || [];
       newPosition = cardsInColumn.length;
     } else {
       return;
     }
+
     const oldIndex = (cardsByColumn[activeCard.column_id] || []).findIndex(
       (c) => c.id === activeCard.id,
     );
 
-    //ничего не изменилось
+    //ничего не изменилось - ничего не делаем
     if (activeCard.column_id === newColumnId && oldIndex === newPosition) {
       return;
     }
@@ -138,6 +147,7 @@ function Board() {
         }),
       ).unwrap();
     } catch (e) {
+      //при ошибке откатываем изменения через перезагрузку карточек
       console.error("Ошибка перемещения:", e);
 
       dispatch(fetchCards(activeCard.column_id));
@@ -145,8 +155,15 @@ function Board() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (columnsLoading) return <div>Загрузка...</div>;
+  if (columnsError) {
+    return (
+      <div className="error">
+        <p>{columnsError}</p>
+        <button onClick={loadColumns}>Повторить</button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -187,7 +204,7 @@ function Board() {
             if (e.key === "Enter") handleCreateColumn();
           }}
         />
-        <button onClick={handleCreateColumn}>Add column</button>
+        <button onClick={handleCreateColumn}>Создать колонку</button>
       </div>
 
       <CardModal card={editingCard} onClose={() => setEditingCard(null)} />

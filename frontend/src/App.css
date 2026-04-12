@@ -83,3 +83,11 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   max-width: 250px;
 }
+
+.error {
+  background: #ffe5e5;
+  color: #b00020;
+  padding: 8px;
+  border-radius: 6px;
+  margin: 8px 0;
+}

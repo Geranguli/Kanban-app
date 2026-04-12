@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../store/userSlice";
+import { loginUser, clearError } from "../store/userSlice";
 
 function Auth() {
   const [username, setUsername] = useState("");
@@ -11,13 +11,15 @@ function Auth() {
   const { loading, error } = useSelector((state) => state.user);
 
   const handleLogin = async () => {
-    if (!username.trim()) return;
+    const trimmed = username.trim();
+    if (!trimmed) return;
 
-    const result = await dispatch(loginUser(username));
-
-    // после успешного логина переходим на главную
-    if (result.meta.requestStatus === "fulfilled") {
+    try {
+      await dispatch(loginUser(trimmed)).unwrap();
+      // Редирект после успешного входа
       navigate("/");
+    } catch (err) {
+      console.error("Ошибка логина:", err);
     }
   };
 
@@ -27,18 +29,30 @@ function Auth() {
 
       <input
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Введите имя"
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleLogin();
+        onChange={(e) => {
+          setUsername(e.target.value);
+          //сбрасываем ошибку при исправлении ввода
+          if (error) dispatch(clearError());
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !loading) {
+            handleLogin();
+          }
+        }}
+        placeholder="Введите имя"
+        disabled={loading}
+        autoFocus
       />
 
-      <button onClick={handleLogin} disabled={loading}>
+      <button onClick={handleLogin} disabled={loading || !username.trim()}>
         {loading ? "Загрузка..." : "Войти"}
       </button>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <div className="error" role="alert">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

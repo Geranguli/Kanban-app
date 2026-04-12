@@ -12,6 +12,9 @@ import CardItem from "./CardItem";
 function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
 
+  //loading из глобала (ошибки - локальные)
+  const { loading } = useSelector((state) => state.cards);
+
   // делаем колонку drop-зоной для карточек
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${column.id}`,
@@ -20,37 +23,93 @@ function ColumnItem({ column, cards, onEditCard }) {
       columnId: column.id,
     },
   });
+  //редактирование колонки
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
 
+  //создание карточки
   const [newCard, setNewCard] = useState({
     title: "",
     description: "",
     due_date: "",
   });
 
-  const today = new Date().toISOString().split("T")[0];
-  const { error } = useSelector((state) => state.cards);
+  //локальная ошибка не влияет на другие колонки
+  const [error, setError] = useState(null);
+  //сохраняем данные последней попытки для кнопки повторить
+  const [lastCardData, setLastCardData] = useState(null);
 
-  const handleUpdateColumn = () => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const handleUpdateColumn = async () => {
     if (!title.trim()) return;
-    dispatch(updateColumn({ columnId: column.id, title }));
-    setEditing(false);
+    try {
+      await dispatch(updateColumn({ columnId: column.id, title })).unwrap();
+      setEditing(false);
+    } catch (err) {
+      setError(err?.message || "Ошибка обновления колонки");
+    }
   };
 
-  const handleCreateCard = () => {
-    if (!newCard.title.trim()) return;
-    dispatch(
-      createCard({
-        columnId: column.id,
-        card: {
-          title: newCard.title,
-          description: newCard.description || null,
-          due_date: newCard.due_date || null,
-        },
-      }),
-    );
-    setNewCard({ title: "", description: "", due_date: "" });
+  const handleDeleteColumn = async () => {
+    try {
+      await dispatch(deleteColumn(column.id)).unwrap();
+    } catch (err) {
+      setError(err?.message || "Ошибка удаления колонки");
+    }
+  };
+
+  const handleCreateCard = async () => {
+    const cardData = {
+      title: newCard.title,
+      description: newCard.description || null,
+      due_date: newCard.due_date || null,
+    };
+    if (!cardData.title.trim()) return;
+
+    setError(null);
+    setLastCardData(cardData); // сохраняем на случай ошибки
+
+    try {
+      await dispatch(
+        createCard({
+          columnId: column.id,
+          card: cardData,
+        }),
+      ).unwrap();
+
+      // очищаем форму
+      setNewCard({
+        title: "",
+        description: "",
+        due_date: "",
+      });
+
+      setLastCardData(null);
+    } catch (err) {
+      setError(err?.message || err || "Ошибка создания карточки");
+      console.error("Ошибка создания карточки:", err);
+    }
+  };
+  //восстановление формы при "повторить"
+  const handleRetry = () => {
+    if (!lastCardData) return;
+
+    setNewCard({
+      title: lastCardData.title || "",
+      description: lastCardData.description || "",
+      due_date: lastCardData.due_date || "",
+    });
+
+    setError(null);
+
+    // фокус на заголовок
+    setTimeout(() => {
+      const input = document.querySelector(
+        `.column input[placeholder="Title"]`,
+      );
+      input?.focus();
+    }, 0);
   };
 
   return (
@@ -75,9 +134,7 @@ function ColumnItem({ column, cards, onEditCard }) {
         <>
           <h3>{column.title}</h3>
           <button onClick={() => setEditing(true)}>Edit</button>
-          <button onClick={() => dispatch(deleteColumn(column.id))}>
-            Delete
-          </button>
+          <button onClick={handleDeleteColumn}>Delete</button>
         </>
       )}
 
@@ -113,8 +170,20 @@ function ColumnItem({ column, cards, onEditCard }) {
           value={newCard.due_date}
           onChange={(e) => setNewCard({ ...newCard, due_date: e.target.value })}
         />
-        <button onClick={handleCreateCard}>Add card</button>
-        {error && <p className="error">{error}</p>}
+        <button onClick={handleCreateCard} disabled={loading}>
+          {loading ? "Создание..." : "Add card"}
+        </button>
+        {error && (
+          <div className="error">
+            <p>{error}</p>
+
+            {lastCardData && (
+              <button onClick={handleRetry} disabled={loading}>
+                Исправить и повторить
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

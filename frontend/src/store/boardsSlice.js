@@ -4,45 +4,65 @@ import api from "../services/api";
 // получить все доски пользователя
 export const fetchBoards = createAsyncThunk(
   "boards/fetchBoards",
-  async (userId) => {
-    const res = await api.get(`/boards/?user_id=${userId}`);
-    return res.data;
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/boards/?user_id=${userId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
   },
 );
 
 // создать новую доску
 export const createBoard = createAsyncThunk(
   "boards/createBoard",
-  async ({ title, userId }) => {
-    const res = await api.post(`/boards?user_id=${userId}`, { title });
-    return res.data;
+  async ({ title, userId }, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/boards?user_id=${userId}`, { title });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
   },
 );
 
 // удалить доску
 export const deleteBoard = createAsyncThunk(
   "boards/deleteBoard",
-  async (boardId) => {
-    await api.delete(`/boards/${boardId}`);
-    return boardId;
+  async (boardId, { rejectWithValue }) => {
+    try {
+      await api.delete(`/boards/${boardId}`);
+      return boardId;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
   },
 );
 
 // удалить все доски
 export const deleteAllBoards = createAsyncThunk(
   "boards/deleteAllBoards",
-  async (userId) => {
-    await api.delete(`/boards/?user_id=${userId}`);
-    return userId;
+  async (userId, { rejectWithValue }) => {
+    try {
+      await api.delete(`/boards/?user_id=${userId}`);
+      return userId;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
   },
 );
 
 // переименовать доску
 export const updateBoard = createAsyncThunk(
   "boards/updateBoard",
-  async ({ boardId, title }) => {
-    const res = await api.put(`/boards/${boardId}`, { title });
-    return res.data;
+  async ({ boardId, title }, { rejectWithValue }) => {
+    try {
+      const res = await api.put(`/boards/${boardId}`, { title });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
   },
 );
 
@@ -56,6 +76,7 @@ const boardsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      //fetch
       .addCase(fetchBoards.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -64,24 +85,59 @@ const boardsSlice = createSlice({
         state.loading = false;
         state.boards = action.payload;
       })
-      .addCase(fetchBoards.rejected, (state) => {
+      .addCase(fetchBoards.rejected, (state, action) => {
         state.loading = false;
-        state.error = "Ошибка загрузки досок";
+        state.error = action.payload || "Ошибка загрузки досок";
+      })
+      //create
+      .addCase(createBoard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
       .addCase(createBoard.fulfilled, (state, action) => {
+        state.loading = false;
         state.boards.push(action.payload);
       })
+      .addCase(createBoard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Ошибка создания доски";
+      })
+      //delete
+      .addCase(deleteBoard.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(deleteBoard.fulfilled, (state, action) => {
+        state.loading = false;
         state.boards = state.boards.filter((b) => b.id !== action.payload);
       })
+      .addCase(deleteBoard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Ошибка удаления доски";
+      })
+      //delete all
+      .addCase(deleteAllBoards.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(deleteAllBoards.fulfilled, (state) => {
-        state.boards = []; // очищаем список
+        state.loading = false;
+        state.boards = [];
+      })
+      .addCase(deleteAllBoards.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Ошибка удаления досок";
+      })
+      //update
+      .addCase(updateBoard.pending, (state) => {
+        state.loading = true;
       })
       .addCase(updateBoard.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.boards.findIndex((b) => b.id === action.payload.id);
-        if (index !== -1) {
-          state.boards[index] = action.payload;
-        }
+        if (index !== -1) state.boards[index] = action.payload;
+      })
+      .addCase(updateBoard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Ошибка обновления доски";
       });
   },
 });
