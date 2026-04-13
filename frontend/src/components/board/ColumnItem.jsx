@@ -12,8 +12,11 @@ import CardItem from "./CardItem";
 function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
 
-  //loading из глобала (ошибки - локальные)
-  const { loading } = useSelector((state) => state.cards);
+  //loading из глобала (ошибки - локальные) для создания карточки
+  const { loading: cardLoading } = useSelector((state) => state.cards);
+
+  // локальный loading для колонки (редактирование/удаление)
+  const [isLoading, setIsLoading] = useState(false);
 
   // делаем колонку drop-зоной для карточек
   const { setNodeRef, isOver } = useDroppable({
@@ -43,19 +46,30 @@ function ColumnItem({ column, cards, onEditCard }) {
 
   const handleUpdateColumn = async () => {
     if (!title.trim()) return;
+    setError(null);
+    setIsLoading(true);
+
     try {
       await dispatch(updateColumn({ columnId: column.id, title })).unwrap();
+
       setEditing(false);
     } catch (err) {
       setError(err?.message || "Ошибка обновления колонки");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteColumn = async () => {
+    setError(null);
+    setIsLoading(true);
+
     try {
       await dispatch(deleteColumn(column.id)).unwrap();
     } catch (err) {
       setError(err?.message || "Ошибка удаления колонки");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -112,6 +126,9 @@ function ColumnItem({ column, cards, onEditCard }) {
     }, 0);
   };
 
+  // общий loading статус
+  const loading = isLoading || cardLoading;
+
   return (
     <div
       ref={setNodeRef}
@@ -124,18 +141,49 @@ function ColumnItem({ column, cards, onEditCard }) {
       }}
     >
       {editing ? (
-        <input
-          value={title}
-          autoFocus
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={handleUpdateColumn}
-        />
+        <>
+          <input
+            value={title}
+            autoFocus
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={handleUpdateColumn}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleUpdateColumn();
+            }}
+            disabled={isLoading}
+          />
+          <button
+            onClick={handleUpdateColumn}
+            disabled={isLoading}
+            className={isLoading ? "loading" : ""}
+          >
+            {isLoading ? "Сохранение..." : "Сохранить"}
+          </button>
+        </>
       ) : (
         <>
           <h3>{column.title}</h3>
-          <button onClick={() => setEditing(true)}>Edit</button>
-          <button onClick={handleDeleteColumn}>Delete</button>
+          <button
+            onClick={() => !isLoading && setEditing(true)}
+            disabled={isLoading}
+          >
+            Edit
+          </button>
+          <button onClick={handleDeleteColumn} disabled={isLoading}>
+            {isLoading ? "Удаление..." : "Delete"}
+          </button>
         </>
+      )}
+      {error && (
+        <div className="error">
+          <p>{error}</p>
+
+          {lastCardData && (
+            <button onClick={handleRetry} disabled={loading}>
+              Исправить и повторить
+            </button>
+          )}
+        </div>
       )}
 
       {/*передаем id карточек для правильного расчета позиций */}
@@ -156,6 +204,7 @@ function ColumnItem({ column, cards, onEditCard }) {
           onKeyDown={(e) => {
             if (e.key === "Enter") handleCreateCard();
           }}
+          disabled={cardLoading}
         />
         <textarea
           placeholder="Description"
@@ -163,27 +212,18 @@ function ColumnItem({ column, cards, onEditCard }) {
           onChange={(e) =>
             setNewCard({ ...newCard, description: e.target.value })
           }
+          disabled={cardLoading}
         />
         <input
           type="date"
           min={today}
           value={newCard.due_date}
           onChange={(e) => setNewCard({ ...newCard, due_date: e.target.value })}
+          disabled={cardLoading}
         />
         <button onClick={handleCreateCard} disabled={loading}>
           {loading ? "Создание..." : "Add card"}
         </button>
-        {error && (
-          <div className="error">
-            <p>{error}</p>
-
-            {lastCardData && (
-              <button onClick={handleRetry} disabled={loading}>
-                Исправить и повторить
-              </button>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

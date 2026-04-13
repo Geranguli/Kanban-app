@@ -21,7 +21,7 @@ function Board() {
     loading: columnsLoading,
     error: columnsError,
   } = useSelector((state) => state.columns);
-  const { cards } = useSelector((state) => state.cards);
+  const { cards, loading: cardsLoading } = useSelector((state) => state.cards);
   const { boards } = useSelector((state) => state.boards);
   const { user } = useSelector((state) => state.user);
 
@@ -71,10 +71,10 @@ function Board() {
 
   //доски подгружаются после перезагрузки
   useEffect(() => {
-    if (user) {
+    if (user && boards.length === 0) {
       dispatch(fetchBoards(user.id));
     }
-  }, [dispatch, user]);
+  }, [dispatch, user, boards.length]);
 
   const handleCreateColumn = () => {
     if (!newColumnTitle.trim()) return;
@@ -156,20 +156,32 @@ function Board() {
   };
 
   if (columnsLoading) return <div>Загрузка...</div>;
-  if (columnsError) {
-    return (
-      <div className="error">
-        <p>{columnsError}</p>
-        <button onClick={loadColumns}>Повторить</button>
-      </div>
-    );
-  }
 
   return (
     <div>
       <h1>{board?.title || "Загрузка..."}</h1>
 
       <button onClick={() => navigate("/")}>Назад</button>
+
+      {columnsError && (
+        <div
+          className="error"
+          style={{
+            background: "#fee2e2",
+            padding: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          <p style={{ color: "#dc2626" }}>{columnsError}</p>
+          <button onClick={loadColumns}>Повторить</button>
+        </div>
+      )}
+
+      {cardsLoading && (
+        <div style={{ marginBottom: "10px", color: "#666" }}>
+          Загрузка карточек...
+        </div>
+      )}
 
       <DndContext
         collisionDetection={pointerWithin}
@@ -204,7 +216,9 @@ function Board() {
             if (e.key === "Enter") handleCreateColumn();
           }}
         />
-        <button onClick={handleCreateColumn}>Создать колонку</button>
+        <button onClick={handleCreateColumn} disabled={columnsLoading}>
+          {columnsLoading ? "Создание..." : "Создать колонку"}
+        </button>
       </div>
 
       <CardModal card={editingCard} onClose={() => setEditingCard(null)} />

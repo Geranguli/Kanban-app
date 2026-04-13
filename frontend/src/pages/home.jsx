@@ -53,13 +53,28 @@ function Home() {
   );
 
   if (loading) return <div>Загрузка...</div>;
-  if (error) return <div style={{ color: "red" }}>{error}</div>;
 
   return (
     <div>
       <h2>Доски</h2>
 
       <button onClick={handleLogout}>Выйти</button>
+
+      {error && (
+        <div
+          className="error"
+          style={{
+            background: "#fee2e2",
+            padding: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          <p style={{ color: "#dc2626" }}>{error}</p>
+          <button onClick={() => dispatch(fetchBoards(user.id))}>
+            Повторить
+          </button>
+        </div>
+      )}
 
       <div style={{ marginBottom: "10px" }}>
         {/* поиск */}
@@ -86,7 +101,9 @@ function Home() {
             if (e.key === "Enter") handleCreateBoard();
           }}
         />
-        <button onClick={handleCreateBoard}>Создать</button>
+        <button onClick={handleCreateBoard} disabled={loading}>
+          {loading ? "Создание..." : "Создать"}
+        </button>
       </div>
     </div>
   );

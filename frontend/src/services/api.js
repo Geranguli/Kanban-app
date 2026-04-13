@@ -7,8 +7,11 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response, // успешно - пропускаем
   (error) => {
-    const message =
-      error.response?.data?.message || error.message || "Неизвестная ошибка";
+    if (!error.response) {
+      return Promise.reject("Нет соединения с сервером");
+    }
+
+    const message = error.response?.data?.message || "Ошибка сервера";
 
     return Promise.reject(message);
   },

@@ -112,6 +112,9 @@ const cardsSlice = createSlice({
     error: null,
   },
   reducers: {
+    clearError(state) {
+      state.error = null;
+    },
     //меняем стейт до ответа сервера
     moveCardOptimistic(state, action) {
       const { cardId, newColumn, newPosition } = action.payload;
@@ -198,6 +201,7 @@ const cardsSlice = createSlice({
       //delete
       .addCase(deleteCard.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(deleteCard.fulfilled, (state, action) => {
         state.loading = false;
@@ -213,6 +217,7 @@ const cardsSlice = createSlice({
       //update
       .addCase(updateCard.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(updateCard.fulfilled, (state, action) => {
         state.loading = false;
@@ -229,6 +234,7 @@ const cardsSlice = createSlice({
       //upload
       .addCase(uploadImages.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(uploadImages.fulfilled, (state, action) => {
         state.loading = false;
@@ -247,6 +253,7 @@ const cardsSlice = createSlice({
       //deleteImage
       .addCase(deleteImage.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(deleteImage.fulfilled, (state, action) => {
         state.loading = false;
@@ -268,8 +275,10 @@ const cardsSlice = createSlice({
       //обновляем карточки после перемещения
       .addCase(moveCard.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(moveCard.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.cards.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) state.cards[index] = action.payload;
       })
@@ -280,6 +289,6 @@ const cardsSlice = createSlice({
   },
 });
 
-export const { moveCardOptimistic } = cardsSlice.actions;
+export const { moveCardOptimistic, clearError } = cardsSlice.actions;
 
 export default cardsSlice.reducer;
