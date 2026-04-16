@@ -70,7 +70,9 @@ const boardsSlice = createSlice({
   name: "boards",
   initialState: {
     boards: [],
-    loading: false,
+    loading: false, // только для fetch
+    actionLoading: false, // для create/update/delete
+    actionType: null,
     error: null,
   },
   reducers: {},
@@ -91,52 +93,67 @@ const boardsSlice = createSlice({
       })
       //create
       .addCase(createBoard.pending, (state) => {
-        state.loading = true;
+        state.actionLoading = true;
+        state.actionType = "create";
         state.error = null;
       })
       .addCase(createBoard.fulfilled, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         state.boards.push(action.payload);
       })
       .addCase(createBoard.rejected, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         state.error = action.payload || "Ошибка создания доски";
       })
       //delete
       .addCase(deleteBoard.pending, (state) => {
-        state.loading = true;
+        state.actionLoading = true;
+        state.actionType = "delete";
+        state.error = null;
       })
       .addCase(deleteBoard.fulfilled, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         state.boards = state.boards.filter((b) => b.id !== action.payload);
       })
       .addCase(deleteBoard.rejected, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         state.error = action.payload || "Ошибка удаления доски";
       })
       //delete all
       .addCase(deleteAllBoards.pending, (state) => {
-        state.loading = true;
+        state.actionLoading = true;
+        state.actionType = "deleteAll";
+        state.error = null;
       })
       .addCase(deleteAllBoards.fulfilled, (state) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         state.boards = [];
       })
       .addCase(deleteAllBoards.rejected, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         state.error = action.payload || "Ошибка удаления досок";
       })
       //update
       .addCase(updateBoard.pending, (state) => {
-        state.loading = true;
+        state.actionLoading = true;
+        state.actionType = "update";
+        state.error = null;
       })
       .addCase(updateBoard.fulfilled, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         const index = state.boards.findIndex((b) => b.id === action.payload.id);
         if (index !== -1) state.boards[index] = action.payload;
       })
       .addCase(updateBoard.rejected, (state, action) => {
-        state.loading = false;
+        state.actionLoading = false;
+        state.actionType = null;
         state.error = action.payload || "Ошибка обновления доски";
       });
   },

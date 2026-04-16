@@ -13,7 +13,9 @@ function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { boards, loading, error } = useSelector((state) => state.boards);
+  const { boards, loading, error, actionLoading, actionType } = useSelector(
+    (state) => state.boards,
+  );
   const { user } = useSelector((state) => state.user);
   const [search, setSearch] = useState("");
 
@@ -52,7 +54,9 @@ function Home() {
     board.title.toLowerCase().includes(search.toLowerCase()),
   );
 
-  if (loading) return <div>Загрузка...</div>;
+  if (loading && boards.length === 0) {
+    return <div className="page-loading">Загрузка...</div>;
+  }
 
   return (
     <div>
@@ -63,15 +67,8 @@ function Home() {
       </button>
 
       {error && (
-        <div
-          className="error mb-16"
-          style={{
-            background: "#fee2e2",
-            padding: "10px",
-          }}
-        >
-          <div className="error">{error}</div>
-          {/*<p style={{ color: "#dc2626" }}>{error}</p>*/}
+        <div className="error-box mb-16">
+          <div>{error}</div>
           <button
             onClick={() => dispatch(fetchBoards(user.id))}
             className="btn btn-primary mt-8"
@@ -84,14 +81,21 @@ function Home() {
       <div className="mb-16">
         {/* поиск */}
         <input
+          className="input"
           placeholder="Поиск доски..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
 
         {/*удалить все */}
-        <button onClick={handleDeleteAll} className="btn btn-danger ml-8">
-          Удалить все доски
+        <button
+          onClick={handleDeleteAll}
+          disabled={actionLoading && actionType === "deleteAll"}
+          className="btn btn-danger ml-8"
+        >
+          {actionLoading && actionType === "deleteAll"
+            ? "Удаление..."
+            : "Удалить все доски"}
         </button>
       </div>
 
@@ -101,19 +105,28 @@ function Home() {
 
       <div className="mt-20">
         <input
+          className="input"
           value={newBoardTitle}
           onChange={(e) => setNewBoardTitle(e.target.value)}
           placeholder="Название доски"
+          disabled={actionLoading && actionType === "create"}
           onKeyDown={(e) => {
             if (e.key === "Enter") handleCreateBoard();
           }}
         />
         <button
           onClick={handleCreateBoard}
-          disabled={loading}
+          disabled={actionLoading && actionType === "create"}
           className="btn btn-primary mt-10"
         >
-          {loading ? "Создание..." : "Создать"}
+          {actionLoading && actionType === "create" ? (
+            <>
+              <span className="spinner"></span>
+              <span className="loading-text">Создание...</span>
+            </>
+          ) : (
+            "Создать"
+          )}
         </button>
       </div>
     </div>

@@ -166,15 +166,8 @@ function Board() {
       </button>
 
       {columnsError && (
-        <div
-          className="error mb-16"
-          style={{
-            background: "#fee2e2",
-            padding: "10px",
-          }}
-        >
-          <div className="error">{columnsError}</div>
-          {/*<p style={{ color: "#dc2626" }}>{columnsError}</p>*/}
+        <div className="error-box mb-16">
+          <div>{columnsError}</div>
           <button onClick={loadColumns} className="btn btn-primary mt-8">
             Повторить
           </button>
@@ -182,9 +175,7 @@ function Board() {
       )}
 
       {cardsLoading && (
-        <div style={{ marginBottom: "10px", color: "#666" }}>
-          Загрузка карточек...
-        </div>
+        <div className="loading-text mb-10">Загрузка карточек...</div>
       )}
 
       <DndContext
@@ -213,6 +204,7 @@ function Board() {
 
       <div className="form mt-20">
         <input
+          className="input"
           value={newColumnTitle}
           onChange={(e) => setNewColumnTitle(e.target.value)}
           placeholder="Column title"
@@ -225,7 +217,14 @@ function Board() {
           disabled={columnsLoading}
           className="btn btn-primary mt-10"
         >
-          {columnsLoading ? "Создание..." : "Создать колонку"}
+          {columnsLoading ? (
+            <>
+              <span className="spinner"></span>
+              <span className="loading-text">Создание...</span>
+            </>
+          ) : (
+            "Создать колонку"
+          )}
         </button>
       </div>
 

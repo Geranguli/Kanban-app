@@ -77,7 +77,7 @@ function CardItem({ card, onEdit }) {
         </div>
       )}
 
-      {error && <div className="error mt-8">{error}</div>}
+      {error && <div className="error-inline mt-8">{error}</div>}
 
       <button
         onClick={handleEdit}
@@ -92,7 +92,11 @@ function CardItem({ card, onEdit }) {
         disabled={isLoading}
         className="btn btn-danger mt-6"
       >
-        {isLoading ? "Удаление..." : "Delete"}
+        {isLoading ? (
+          <span className="loading-text">Удаление...</span>
+        ) : (
+          "Delete"
+        )}
       </button>
 
       {card.images && card.images.length > 0 && (

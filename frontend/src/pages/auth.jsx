@@ -28,6 +28,7 @@ function Auth() {
       <h1>Авторизация</h1>
 
       <input
+        className="input"
         value={username}
         onChange={(e) => {
           setUsername(e.target.value);
@@ -49,7 +50,14 @@ function Auth() {
         disabled={loading || !username.trim()}
         className="btn btn-primary mt-16"
       >
-        {loading ? "Загрузка..." : "Войти"}
+        {loading ? (
+          <>
+            <span className="spinner"></span>
+            <span className="loading-text">Загрузка...</span>
+          </>
+        ) : (
+          "Войти"
+        )}
       </button>
 
       {error && (

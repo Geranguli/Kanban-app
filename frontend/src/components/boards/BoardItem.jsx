@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { deleteBoard, updateBoard } from "../../store/boardsSlice";
 
 function BoardItem({ board }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const { actionLoading, actionType } = useSelector((state) => state.boards);
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(board.title);
@@ -42,12 +44,15 @@ function BoardItem({ board }) {
     }
   };
 
+  const loading = isLoading || (actionLoading && actionType !== "create");
+
   return (
     <div className="mb-16">
-      {error && <div className="error mb-10">{error}</div>}
+      {error && <div className="error-box mb-10">{error}</div>}
       {editing ? (
         <>
           <input
+            className="input"
             value={title}
             autoFocus
             onChange={(e) => setTitle(e.target.value)}
@@ -55,14 +60,22 @@ function BoardItem({ board }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleUpdate();
             }}
-            disabled={isLoading}
+            disabled={loading}
           />
+
           <button
             onClick={handleUpdate}
-            disabled={isLoading}
+            disabled={loading}
             className="btn btn-primary mt-8"
           >
-            {isLoading ? "Сохранение..." : "Сохранить"}
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                <span className="loading-text">Сохранение...</span>
+              </>
+            ) : (
+              "Сохранить"
+            )}
           </button>
         </>
       ) : (
@@ -70,20 +83,20 @@ function BoardItem({ board }) {
           {/* клик по названию - переход на страницу доски */}
           <span
             style={{ cursor: "pointer" }}
-            onClick={() => !isLoading && navigate(`/boards/${board.id}`)}
+            onClick={() => !loading && navigate(`/boards/${board.id}`)}
           >
             {board.title}
           </span>
           <button
             onClick={() => setEditing(true)}
-            disabled={isLoading}
+            disabled={loading}
             className="btn btn-ghost ml-8"
           >
             edit
           </button>
           <button
             onClick={handleDelete}
-            disabled={isLoading}
+            disabled={loading}
             className="btn btn-danger ml-8"
           >
             delete

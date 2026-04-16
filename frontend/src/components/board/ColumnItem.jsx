@@ -143,6 +143,7 @@ function ColumnItem({ column, cards, onEditCard }) {
       {editing ? (
         <>
           <input
+            className="input"
             value={title}
             autoFocus
             onChange={(e) => setTitle(e.target.value)}
@@ -157,7 +158,14 @@ function ColumnItem({ column, cards, onEditCard }) {
             disabled={isLoading}
             className={`btn btn-primary mt-6 ${isLoading ? "loading" : ""}`}
           >
-            {isLoading ? "Сохранение..." : "Сохранить"}
+            {isLoading ? (
+              <>
+                <span className="spinner"></span>
+                <span className="loading-text">Сохранение...</span>
+              </>
+            ) : (
+              "Сохранить"
+            )}
           </button>
         </>
       ) : (
@@ -176,12 +184,16 @@ function ColumnItem({ column, cards, onEditCard }) {
             disabled={isLoading}
             className="btn btn-danger mt-6"
           >
-            {isLoading ? "Удаление..." : "Delete"}
+            {isLoading ? (
+              <span className="loading-text">Удаление...</span>
+            ) : (
+              "Delete"
+            )}
           </button>
         </>
       )}
       {error && (
-        <div className="error">
+        <div className="error-box">
           <p>{error}</p>
 
           {lastCardData && (
@@ -208,6 +220,7 @@ function ColumnItem({ column, cards, onEditCard }) {
 
       <div className="form mt-16">
         <input
+          className="input"
           placeholder="Title"
           value={newCard.title}
           onChange={(e) => setNewCard({ ...newCard, title: e.target.value })}
@@ -217,6 +230,7 @@ function ColumnItem({ column, cards, onEditCard }) {
           disabled={cardLoading}
         />
         <textarea
+          className="input"
           placeholder="Description"
           value={newCard.description}
           onChange={(e) =>
@@ -225,6 +239,7 @@ function ColumnItem({ column, cards, onEditCard }) {
           disabled={cardLoading}
         />
         <input
+          className="input"
           type="date"
           min={today}
           value={newCard.due_date}
@@ -236,7 +251,14 @@ function ColumnItem({ column, cards, onEditCard }) {
           disabled={loading}
           className="btn btn-primary mt-10"
         >
-          {loading ? "Создание..." : "Add card"}
+          {loading ? (
+            <>
+              <span className="spinner"></span>
+              <span className="loading-text">Создание...</span>
+            </>
+          ) : (
+            "Add card"
+          )}
         </button>
       </div>
     </div>

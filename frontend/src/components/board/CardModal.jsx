@@ -96,10 +96,11 @@ function CardModal({ card, onClose }) {
 
         {/* Показываем ошибку */}
         {(localError || error) && (
-          <div className="error mb-10">{localError || error}</div>
+          <div className="error-box mb-10">{localError || error}</div>
         )}
 
         <input
+          className="input"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Title"
@@ -107,6 +108,7 @@ function CardModal({ card, onClose }) {
         />
 
         <textarea
+          className="input"
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
@@ -116,6 +118,7 @@ function CardModal({ card, onClose }) {
         />
 
         <input
+          className="input"
           type="date"
           value={formData.due_date || ""}
           onChange={(e) =>
@@ -149,6 +152,7 @@ function CardModal({ card, onClose }) {
           <h4>Add images</h4>
 
           <input
+            className="input"
             type="file"
             multiple
             onChange={(e) => setNewImages(Array.from(e.target.files))}
@@ -178,7 +182,14 @@ function CardModal({ card, onClose }) {
           disabled={loading}
           className="btn btn-primary mt-16"
         >
-          {loading ? "Сохранение..." : "Save"}
+          {loading ? (
+            <>
+              <span className="spinner"></span>
+              <span className="loading-text">Сохранение...</span>
+            </>
+          ) : (
+            "Save"
+          )}
         </button>
         <button
           onClick={onClose}
