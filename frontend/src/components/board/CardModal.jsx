@@ -96,17 +96,7 @@ function CardModal({ card, onClose }) {
 
         {/* Показываем ошибку */}
         {(localError || error) && (
-          <div
-            style={{
-              color: "#dc2626",
-              background: "#fee2e2",
-              padding: "10px",
-              borderRadius: "4px",
-              marginBottom: "10px",
-            }}
-          >
-            {localError || error}
-          </div>
+          <div className="error mb-10">{localError || error}</div>
         )}
 
         <input
@@ -139,9 +129,12 @@ function CardModal({ card, onClose }) {
 
           {localImages.length > 0 ? (
             localImages.map((img) => (
-              <div key={img.id}>
+              <div key={img.id} className="mt-8">
                 <img src={`http://localhost:8000/${img.url}`} width="100" />
-                <button onClick={() => handleDeleteImage(img.id)}>
+                <button
+                  onClick={() => handleDeleteImage(img.id)}
+                  className="btn btn-danger mt-8"
+                >
                   Delete
                 </button>
               </div>
@@ -180,10 +173,18 @@ function CardModal({ card, onClose }) {
           )}
         </div>
 
-        <button onClick={handleSave} disabled={loading}>
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="btn btn-primary mt-16"
+        >
           {loading ? "Сохранение..." : "Save"}
         </button>
-        <button onClick={onClose} disabled={loading}>
+        <button
+          onClick={onClose}
+          disabled={loading}
+          className="btn btn-ghost mt-16 ml-8"
+        >
           Cancel
         </button>
       </div>

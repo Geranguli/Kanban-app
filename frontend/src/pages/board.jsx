@@ -161,19 +161,23 @@ function Board() {
     <div>
       <h1>{board?.title || "Загрузка..."}</h1>
 
-      <button onClick={() => navigate("/")}>Назад</button>
+      <button onClick={() => navigate("/")} className="btn btn-ghost mb-12">
+        Назад
+      </button>
 
       {columnsError && (
         <div
-          className="error"
+          className="error mb-16"
           style={{
             background: "#fee2e2",
             padding: "10px",
-            marginBottom: "10px",
           }}
         >
-          <p style={{ color: "#dc2626" }}>{columnsError}</p>
-          <button onClick={loadColumns}>Повторить</button>
+          <div className="error">{columnsError}</div>
+          {/*<p style={{ color: "#dc2626" }}>{columnsError}</p>*/}
+          <button onClick={loadColumns} className="btn btn-primary mt-8">
+            Повторить
+          </button>
         </div>
       )}
 
@@ -207,7 +211,7 @@ function Board() {
         </DragOverlay>
       </DndContext>
 
-      <div className="form">
+      <div className="form mt-20">
         <input
           value={newColumnTitle}
           onChange={(e) => setNewColumnTitle(e.target.value)}
@@ -216,7 +220,11 @@ function Board() {
             if (e.key === "Enter") handleCreateColumn();
           }}
         />
-        <button onClick={handleCreateColumn} disabled={columnsLoading}>
+        <button
+          onClick={handleCreateColumn}
+          disabled={columnsLoading}
+          className="btn btn-primary mt-10"
+        >
           {columnsLoading ? "Создание..." : "Создать колонку"}
         </button>
       </div>

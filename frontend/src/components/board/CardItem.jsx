@@ -53,9 +53,7 @@ function CardItem({ card, onEdit }) {
   return (
     <div
       ref={setNodeRef}
-      style={{
-        ...style,
-      }}
+      style={{ ...style }}
       className={`card ${isDragging ? "dragging" : ""}`}
     >
       {/* область для перетаскивания */}
@@ -67,35 +65,38 @@ function CardItem({ card, onEdit }) {
       >
         ⠿
       </div>
+
       <div>{card.title || "Без названия"}</div>
+
       {card.description && <div>{card.description}</div>}
+
       {/* не рендерим пустые блоки */}
       {card.due_date && (
-        <div className={isOverdue ? "overdue" : ""}>{card.due_date}</div>
-      )}
-
-      {error && (
-        <div
-          style={{
-            color: "#dc2626",
-            fontSize: "12px",
-            margin: "4px 0",
-            background: "#fee2e2",
-            padding: "4px",
-            borderRadius: "4px",
-          }}
-        >
-          {error}
+        <div className={`card-date ${isOverdue ? "overdue" : ""}`}>
+          {card.due_date}
         </div>
       )}
-      <button onClick={handleEdit} disabled={isLoading}>
+
+      {error && <div className="error mt-8">{error}</div>}
+
+      <button
+        onClick={handleEdit}
+        disabled={isLoading}
+        className="btn btn-primary mt-6"
+      >
         Edit
       </button>
-      <button onClick={handleDelete} disabled={isLoading}>
+
+      <button
+        onClick={handleDelete}
+        disabled={isLoading}
+        className="btn btn-danger mt-6"
+      >
         {isLoading ? "Удаление..." : "Delete"}
       </button>
+
       {card.images && card.images.length > 0 && (
-        <div className="card-images">
+        <div className="card-images mt-8">
           {card.images.map((img) => (
             <img
               key={img.id}

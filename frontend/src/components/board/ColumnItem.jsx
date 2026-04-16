@@ -155,21 +155,27 @@ function ColumnItem({ column, cards, onEditCard }) {
           <button
             onClick={handleUpdateColumn}
             disabled={isLoading}
-            className={isLoading ? "loading" : ""}
+            className={`btn btn-primary mt-6 ${isLoading ? "loading" : ""}`}
           >
             {isLoading ? "Сохранение..." : "Сохранить"}
           </button>
         </>
       ) : (
         <>
-          <h3>{column.title}</h3>
+          <h3 className="accent-0">{column.title}</h3>
           <button
             onClick={() => !isLoading && setEditing(true)}
             disabled={isLoading}
+            className="btn btn-ghost mt-6"
           >
             Edit
           </button>
-          <button onClick={handleDeleteColumn} disabled={isLoading}>
+
+          <button
+            onClick={handleDeleteColumn}
+            disabled={isLoading}
+            className="btn btn-danger mt-6"
+          >
             {isLoading ? "Удаление..." : "Delete"}
           </button>
         </>
@@ -179,7 +185,11 @@ function ColumnItem({ column, cards, onEditCard }) {
           <p>{error}</p>
 
           {lastCardData && (
-            <button onClick={handleRetry} disabled={loading}>
+            <button
+              onClick={handleRetry}
+              disabled={loading}
+              className="btn btn-primary mt-8"
+            >
               Исправить и повторить
             </button>
           )}
@@ -196,7 +206,7 @@ function ColumnItem({ column, cards, onEditCard }) {
         ))}
       </SortableContext>
 
-      <div className="form">
+      <div className="form mt-16">
         <input
           placeholder="Title"
           value={newCard.title}
@@ -221,7 +231,11 @@ function ColumnItem({ column, cards, onEditCard }) {
           onChange={(e) => setNewCard({ ...newCard, due_date: e.target.value })}
           disabled={cardLoading}
         />
-        <button onClick={handleCreateCard} disabled={loading}>
+        <button
+          onClick={handleCreateCard}
+          disabled={loading}
+          className="btn btn-primary mt-10"
+        >
           {loading ? "Создание..." : "Add card"}
         </button>
       </div>

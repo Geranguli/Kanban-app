@@ -58,25 +58,30 @@ function Home() {
     <div>
       <h2>Доски</h2>
 
-      <button onClick={handleLogout}>Выйти</button>
+      <button onClick={handleLogout} className="btn btn-ghost mb-16">
+        Выйти
+      </button>
 
       {error && (
         <div
-          className="error"
+          className="error mb-16"
           style={{
             background: "#fee2e2",
             padding: "10px",
-            marginBottom: "10px",
           }}
         >
-          <p style={{ color: "#dc2626" }}>{error}</p>
-          <button onClick={() => dispatch(fetchBoards(user.id))}>
+          <div className="error">{error}</div>
+          {/*<p style={{ color: "#dc2626" }}>{error}</p>*/}
+          <button
+            onClick={() => dispatch(fetchBoards(user.id))}
+            className="btn btn-primary mt-8"
+          >
             Повторить
           </button>
         </div>
       )}
 
-      <div style={{ marginBottom: "10px" }}>
+      <div className="mb-16">
         {/* поиск */}
         <input
           placeholder="Поиск доски..."
@@ -85,14 +90,16 @@ function Home() {
         />
 
         {/*удалить все */}
-        <button onClick={handleDeleteAll}>Удалить все доски</button>
+        <button onClick={handleDeleteAll} className="btn btn-danger ml-8">
+          Удалить все доски
+        </button>
       </div>
 
       {filteredBoards.map((board) => (
         <BoardItem key={board.id} board={board} />
       ))}
 
-      <div>
+      <div className="mt-20">
         <input
           value={newBoardTitle}
           onChange={(e) => setNewBoardTitle(e.target.value)}
@@ -101,7 +108,11 @@ function Home() {
             if (e.key === "Enter") handleCreateBoard();
           }}
         />
-        <button onClick={handleCreateBoard} disabled={loading}>
+        <button
+          onClick={handleCreateBoard}
+          disabled={loading}
+          className="btn btn-primary mt-10"
+        >
           {loading ? "Создание..." : "Создать"}
         </button>
       </div>

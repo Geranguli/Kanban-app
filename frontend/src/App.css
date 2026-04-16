@@ -1,4 +1,6 @@
 @import './styles/global/index.css';
+@import './styles/utilities/index.css';
+@import './styles/components/index.css';
 
 /* Контейнер доски */
 .board {

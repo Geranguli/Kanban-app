@@ -43,8 +43,8 @@ function BoardItem({ board }) {
   };
 
   return (
-    <div>
-      {error && <div className="error">{error}</div>}
+    <div className="mb-16">
+      {error && <div className="error mb-10">{error}</div>}
       {editing ? (
         <>
           <input
@@ -57,7 +57,11 @@ function BoardItem({ board }) {
             }}
             disabled={isLoading}
           />
-          <button onClick={handleUpdate} disabled={isLoading}>
+          <button
+            onClick={handleUpdate}
+            disabled={isLoading}
+            className="btn btn-primary mt-8"
+          >
             {isLoading ? "Сохранение..." : "Сохранить"}
           </button>
         </>
@@ -70,10 +74,18 @@ function BoardItem({ board }) {
           >
             {board.title}
           </span>
-          <button onClick={() => setEditing(true)} disabled={isLoading}>
+          <button
+            onClick={() => setEditing(true)}
+            disabled={isLoading}
+            className="btn btn-ghost ml-8"
+          >
             edit
           </button>
-          <button onClick={handleDelete} disabled={isLoading}>
+          <button
+            onClick={handleDelete}
+            disabled={isLoading}
+            className="btn btn-danger ml-8"
+          >
             delete
           </button>
         </>

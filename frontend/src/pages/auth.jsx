@@ -44,12 +44,16 @@ function Auth() {
         autoFocus
       />
 
-      <button onClick={handleLogin} disabled={loading || !username.trim()}>
+      <button
+        onClick={handleLogin}
+        disabled={loading || !username.trim()}
+        className="btn btn-primary mt-16"
+      >
         {loading ? "Загрузка..." : "Войти"}
       </button>
 
       {error && (
-        <div className="error" role="alert">
+        <div className="error mt-10" role="alert">
           {error}
         </div>
       )}
