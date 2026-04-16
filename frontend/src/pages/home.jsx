@@ -8,6 +8,7 @@ import {
 } from "../store/boardsSlice";
 import BoardItem from "../components/boards/BoardItem";
 import { logout } from "../store/userSlice";
+import Topbar from "../styles/layout/topbar";
 
 function Home() {
   const dispatch = useDispatch();
@@ -60,74 +61,75 @@ function Home() {
 
   return (
     <div>
-      <h2>Доски</h2>
+      <Topbar
+        title="Мои доски"
+        user={user}
+        showLogout={true}
+        onLogout={handleLogout}
+      />
 
-      <button onClick={handleLogout} className="btn btn-ghost mb-16">
-        Выйти
-      </button>
+      <div style={{ padding: "24px" }}>
+        {error && (
+          <div className="error-box mb-16">
+            <div>{error}</div>
+            <button
+              onClick={() => dispatch(fetchBoards(user.id))}
+              className="btn btn-primary mt-8"
+            >
+              Повторить
+            </button>
+          </div>
+        )}
 
-      {error && (
-        <div className="error-box mb-16">
-          <div>{error}</div>
+        <div className="mb-16">
+          <input
+            className="input"
+            placeholder="Поиск доски..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
           <button
-            onClick={() => dispatch(fetchBoards(user.id))}
-            className="btn btn-primary mt-8"
+            onClick={handleDeleteAll}
+            disabled={actionLoading && actionType === "deleteAll"}
+            className="btn btn-danger ml-8"
           >
-            Повторить
+            {actionLoading && actionType === "deleteAll"
+              ? "Удаление..."
+              : "Удалить все доски"}
           </button>
         </div>
-      )}
 
-      <div className="mb-16">
-        {/* поиск */}
-        <input
-          className="input"
-          placeholder="Поиск доски..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        {filteredBoards.map((board) => (
+          <BoardItem key={board.id} board={board} />
+        ))}
 
-        {/*удалить все */}
-        <button
-          onClick={handleDeleteAll}
-          disabled={actionLoading && actionType === "deleteAll"}
-          className="btn btn-danger ml-8"
-        >
-          {actionLoading && actionType === "deleteAll"
-            ? "Удаление..."
-            : "Удалить все доски"}
-        </button>
-      </div>
-
-      {filteredBoards.map((board) => (
-        <BoardItem key={board.id} board={board} />
-      ))}
-
-      <div className="mt-20">
-        <input
-          className="input"
-          value={newBoardTitle}
-          onChange={(e) => setNewBoardTitle(e.target.value)}
-          placeholder="Название доски"
-          disabled={actionLoading && actionType === "create"}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleCreateBoard();
-          }}
-        />
-        <button
-          onClick={handleCreateBoard}
-          disabled={actionLoading && actionType === "create"}
-          className="btn btn-primary mt-10"
-        >
-          {actionLoading && actionType === "create" ? (
-            <>
-              <span className="spinner"></span>
-              <span className="loading-text">Создание...</span>
-            </>
-          ) : (
-            "Создать"
-          )}
-        </button>
+        <div className="mt-20">
+          <input
+            className="input"
+            value={newBoardTitle}
+            onChange={(e) => setNewBoardTitle(e.target.value)}
+            placeholder="Название доски"
+            disabled={actionLoading && actionType === "create"}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreateBoard();
+            }}
+          />
+          <button
+            onClick={handleCreateBoard}
+            disabled={actionLoading && actionType === "create"}
+            className="btn btn-primary mt-10"
+          >
+            {actionLoading && actionType === "create" ? (
+              <>
+                <span className="spinner"></span>
+                <span className="loading-text">Создание...</span>
+              </>
+            ) : (
+              "Создать"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

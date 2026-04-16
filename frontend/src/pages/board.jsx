@@ -6,6 +6,8 @@ import { fetchCards, moveCard, moveCardOptimistic } from "../store/cardsSlice";
 import { fetchBoards } from "../store/boardsSlice";
 import ColumnItem from "../components/board/ColumnItem";
 import CardModal from "../components/board/CardModal";
+import Topbar from "../styles/layout/topbar";
+import { logout } from "../store/userSlice";
 
 import { DndContext, pointerWithin, DragOverlay } from "@dnd-kit/core";
 
@@ -80,6 +82,15 @@ function Board() {
     if (!newColumnTitle.trim()) return;
     dispatch(createColumn({ boardId: id, title: newColumnTitle }));
     setNewColumnTitle("");
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
+  const handleBack = () => {
+    navigate("/");
   };
 
   // запоминаем карточку которую начали тащить
@@ -159,73 +170,84 @@ function Board() {
 
   return (
     <div>
-      <h1>{board?.title || "Загрузка..."}</h1>
+      <Topbar
+        title={board?.title}
+        user={user}
+        showLogout={true}
+        onLogout={handleLogout}
+        showBackButton={true}
+        onBack={handleBack}
+      />
+      <div style={{ padding: "24px" }}>
+        {columnsLoading ? (
+          <div className="page-loading">Загрузка...</div>
+        ) : (
+          <>
+            {columnsError && (
+              <div className="error-box mb-16">
+                <div>{columnsError}</div>
+                <button onClick={loadColumns} className="btn btn-primary mt-8">
+                  Повторить
+                </button>
+              </div>
+            )}
 
-      <button onClick={() => navigate("/")} className="btn btn-ghost mb-12">
-        Назад
-      </button>
+            {cardsLoading && (
+              <div className="loading-text mb-10">Загрузка карточек...</div>
+            )}
 
-      {columnsError && (
-        <div className="error-box mb-16">
-          <div>{columnsError}</div>
-          <button onClick={loadColumns} className="btn btn-primary mt-8">
-            Повторить
-          </button>
-        </div>
-      )}
+            <DndContext
+              collisionDetection={pointerWithin}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="board">
+                {columns.map((column) => (
+                  <ColumnItem
+                    key={column.id}
+                    column={column}
+                    cards={cardsByColumn[column.id] || []}
+                    onEditCard={setEditingCard}
+                  />
+                ))}
+              </div>
 
-      {cardsLoading && (
-        <div className="loading-text mb-10">Загрузка карточек...</div>
-      )}
+              <DragOverlay>
+                {activeCard ? (
+                  <div className="card dragging-preview">
+                    {activeCard.title}
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
 
-      <DndContext
-        collisionDetection={pointerWithin}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="board">
-          {columns.map((column) => (
-            <ColumnItem
-              key={column.id}
-              column={column}
-              cards={cardsByColumn[column.id] || []}
-              onEditCard={setEditingCard}
-            />
-          ))}
-        </div>
-
-        {/* показываем карточку под курсором во время перетаскивания */}
-        <DragOverlay>
-          {activeCard ? (
-            <div className="card dragging-preview">{activeCard.title}</div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      <div className="form mt-20">
-        <input
-          className="input"
-          value={newColumnTitle}
-          onChange={(e) => setNewColumnTitle(e.target.value)}
-          placeholder="Column title"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleCreateColumn();
-          }}
-        />
-        <button
-          onClick={handleCreateColumn}
-          disabled={columnsLoading}
-          className="btn btn-primary mt-10"
-        >
-          {columnsLoading ? (
-            <>
-              <span className="spinner"></span>
-              <span className="loading-text">Создание...</span>
-            </>
-          ) : (
-            "Создать колонку"
-          )}
-        </button>
+            <div className="form mt-20">
+              <input
+                className="input"
+                value={newColumnTitle}
+                onChange={(e) => setNewColumnTitle(e.target.value)}
+                placeholder="Column title"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateColumn();
+                }}
+              />
+              <button
+                onClick={handleCreateColumn}
+                disabled={columnsLoading}
+                className="btn btn-primary mt-10"
+              >
+                {columnsLoading ? (
+                  <>
+                    <span className="spinner"></span>
+                    <span className="loading-text">Создание...</span>
+                  </>
+                ) : (
+                  "Создать колонку"
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <CardModal card={editingCard} onClose={() => setEditingCard(null)} />
