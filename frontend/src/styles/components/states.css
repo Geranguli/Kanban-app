@@ -34,13 +34,21 @@
 }
 
 .spinner {
-    width: 20px;
-    height: 20px;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
     border: 2px solid #e4e6ea;
     border-top-color: #534AB7;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
-    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.spinner-lg {
+     width: 36px;
+    height: 36px;
+    border-width: 3px;
+    border-top-color: #534AB7;
 }
 
 @keyframes spin {

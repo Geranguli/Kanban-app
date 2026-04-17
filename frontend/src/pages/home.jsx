@@ -55,12 +55,25 @@ function Home() {
     board.title.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const isEmpty = filteredBoards.length === 0 && !loading && !error;
+  const isSearching = search.length > 0;
+
   if (loading && boards.length === 0) {
-    return <div className="page-loading">Загрузка...</div>;
+    return (
+      <div className="home-page">
+        <div className="home-body">
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <span className="spinner spinner-lg"></span>
+              </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div>
+    <div className="home-page">
       <Topbar
         title="Мои доски"
         user={user}
@@ -68,57 +81,84 @@ function Home() {
         onLogout={handleLogout}
       />
 
-      <div style={{ padding: "24px" }}>
+      <div className="home-body">
         {error && (
-          <div className="error-box mb-16">
-            <div>{error}</div>
+          <div className="empty-state">
+            <div className="empty-state-text">{error}</div>
             <button
               onClick={() => dispatch(fetchBoards(user.id))}
-              className="btn btn-primary mt-8"
+              className="board-card-btn mt-10"
             >
               Повторить
             </button>
           </div>
         )}
 
-        <div className="mb-16">
+        <div className="home-toolbar">
+          <div className="search-wrapper">
+          <i className="fa-solid fa-magnifying-glass search-icon"></i>
           <input
-            className="input"
+            className="home-search"
             placeholder="Поиск доски..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          </div>
 
-          <button
-            onClick={handleDeleteAll}
-            disabled={actionLoading && actionType === "deleteAll"}
-            className="btn btn-danger ml-8"
-          >
-            {actionLoading && actionType === "deleteAll"
-              ? "Удаление..."
-              : "Удалить все доски"}
-          </button>
+          {boards.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              disabled={actionLoading && actionType === "deleteAll"}
+              className="board-card-btn board-card-btn-del"
+            >
+              {actionLoading && actionType === "deleteAll"
+                ? "Удаление..."
+                : "Удалить все доски"}
+            </button>
+          )}
         </div>
 
-        {filteredBoards.map((board) => (
-          <BoardItem key={board.id} board={board} />
-        ))}
+        {filteredBoards.length > 0 && (
+          <div className="boards-grid">
+            {filteredBoards.map((board) => (
+              <BoardItem key={board.id} board={board} />
+            ))}
+          </div>
+        )}
 
-        <div className="mt-20">
+        {isEmpty && (
+          <div className="empty-state">
+            <div className="empty-state-icon">{isSearching ? (
+              <i className="fa-solid fa-magnifying-glass"></i>
+              ) : (
+              <i className="fa-solid fa-clipboard"></i>
+              )}
+            </div>
+            <div className="empty-state-text">
+              {isSearching
+                ? "Ничего не найдено"
+                : "У вас пока нет досок. Создайте первую!"}
+            </div>
+          </div>
+        )}
+
+        <div className="create-board-row">
           <input
-            className="input"
+            className="home-search"
+            style={{ backgroundImage: "none", paddingLeft: "12px" }}
             value={newBoardTitle}
             onChange={(e) => setNewBoardTitle(e.target.value)}
             placeholder="Название доски"
             disabled={actionLoading && actionType === "create"}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreateBoard();
-            }}
+            onKeyDown={(e) => e.key === "Enter" && handleCreateBoard()}
           />
           <button
             onClick={handleCreateBoard}
-            disabled={actionLoading && actionType === "create"}
-            className="btn btn-primary mt-10"
+            disabled={
+              (actionLoading && actionType === "create") ||
+              !newBoardTitle.trim()
+            }
+            className="board-card-btn"
           >
             {actionLoading && actionType === "create" ? (
               <>
