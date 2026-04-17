@@ -1,7 +1,7 @@
 @import './styles/global/index.css';
 @import './styles/utilities/index.css';
 @import './styles/components/index.css';
-
+@import './styles/pages/index.css';
 
 .board {
   display: flex;

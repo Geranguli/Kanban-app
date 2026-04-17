@@ -24,47 +24,49 @@ function Auth() {
   };
 
   return (
-    <div>
-      <h1>Авторизация</h1>
+    <div className="auth-page">
+      <div className="auth-card">
+        <span className="auth-logo-text">Авторизация</span>
 
-      <input
-        className="input"
-        value={username}
-        onChange={(e) => {
-          setUsername(e.target.value);
-          //сбрасываем ошибку при исправлении ввода
-          if (error) dispatch(clearError());
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !loading) {
-            handleLogin();
-          }
-        }}
-        placeholder="Введите имя"
-        disabled={loading}
-        autoFocus
-      />
+        <p className="auth-subtitle">
+          Введите имя пользователя для входа в систему
+        </p>
 
-      <button
-        onClick={handleLogin}
-        disabled={loading || !username.trim()}
-        className="btn btn-primary mt-16"
-      >
-        {loading ? (
-          <>
-            <span className="spinner"></span>
-            <span className="loading-text">Загрузка...</span>
-          </>
-        ) : (
-          "Войти"
-        )}
-      </button>
-
-      {error && (
-        <div className="error mt-10" role="alert">
-          {error}
+        <div className="auth-field">
+          <label htmlFor="username">Имя пользователя</label>
+          <input
+            id="username"
+            className="input"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              if (error) dispatch(clearError());
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !loading) {
+                handleLogin();
+              }
+            }}
+            placeholder="Введите имя"
+            disabled={loading}
+            autoFocus
+          />
         </div>
-      )}
+
+        <button
+          onClick={handleLogin}
+          disabled={loading || !username.trim()}
+          className="auth-submit"
+        >
+          {loading ? "Загрузка..." : "Войти"}
+        </button>
+
+        {error && (
+          <div className="auth-hint" role="alert" style={{ color: "#d32f2f" }}>
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
