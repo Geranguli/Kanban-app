@@ -169,7 +169,7 @@ function Board() {
   if (columnsLoading) return <div>Загрузка...</div>;
 
   return (
-    <div>
+    <div className="board-page">
       <Topbar
         title={board?.title}
         user={user}
@@ -178,9 +178,11 @@ function Board() {
         showBackButton={true}
         onBack={handleBack}
       />
-      <div style={{ padding: "24px" }}>
+      <div className="board-content">
         {columnsLoading ? (
-          <div className="page-loading">Загрузка...</div>
+          <div className="page-loading">
+            <span className="spinner spinner-lg"></span>
+          </div>
         ) : (
           <>
             {columnsError && (
@@ -201,7 +203,7 @@ function Board() {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
-              <div className="board">
+              <div className="columns-wrap">
                 {columns.map((column) => (
                   <ColumnItem
                     key={column.id}
@@ -234,7 +236,7 @@ function Board() {
               <button
                 onClick={handleCreateColumn}
                 disabled={columnsLoading}
-                className="btn btn-primary mt-10"
+                className="btn btn-primary"
               >
                 {columnsLoading ? (
                   <>
