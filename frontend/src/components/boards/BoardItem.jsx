@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { deleteBoard, updateBoard } from "../../store/boardsSlice";
 
-function BoardItem({ board }) {
+function BoardItem({ board, accentClass }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -38,71 +38,91 @@ function BoardItem({ board }) {
       await dispatch(deleteBoard(board.id)).unwrap();
     } catch (err) {
       setError(err || "Ошибка удаления доски");
-      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loading = isLoading || (actionLoading && actionType !== "create");
+  const loading =
+    isLoading ||
+    (actionLoading && (actionType === "delete" || actionType === "update"));
 
   return (
-    <div className="mb-16">
-      {error && <div className="error-box mb-10">{error}</div>}
-      {editing ? (
-        <>
-          <input
-            className="input"
-            value={title}
-            autoFocus
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleUpdate}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleUpdate();
-            }}
-            disabled={loading}
-          />
+    <div
+      className="board-card"
+      onClick={() => !loading && !editing && navigate(`/boards/${board.id}`)}
+    >
+      <div className={`board-card-accent ${accentClass}`} />
+      <div className="board-card-body">
+        {error && <div className="error-inline mb-8">{error}</div>}
+        {editing ? (
+          <>
+            <input
+              className="input mb-8"
+              value={title}
+              autoFocus
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleUpdate();
+              }}
+              disabled={loading}
+            />
 
-          <button
-            onClick={handleUpdate}
-            disabled={loading}
-            className="btn btn-primary mt-8"
-          >
-            {loading ? (
-              <>
-                <span className="spinner"></span>
-                <span className="loading-text">Сохранение...</span>
-              </>
-            ) : (
-              "Сохранить"
-            )}
-          </button>
-        </>
-      ) : (
-        <>
-          {/* клик по названию - переход на страницу доски */}
-          <span
-            style={{ cursor: "pointer" }}
-            onClick={() => !loading && navigate(`/boards/${board.id}`)}
-          >
-            {board.title}
-          </span>
-          <button
-            onClick={() => setEditing(true)}
-            disabled={loading}
-            className="btn btn-ghost ml-8"
-          >
-            edit
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={loading}
-            className="btn btn-danger ml-8"
-          >
-            delete
-          </button>
-        </>
-      )}
+            <button
+              onClick={handleUpdate}
+              disabled={loading}
+              className="board-card-btn"
+            >
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  <span className="loading-text">Сохранение...</span>
+                </>
+              ) : (
+                "Сохранить"
+              )}
+            </button>
+
+            <button
+              onClick={(e) => {
+                setEditing(false);
+                e.stopPropagation();
+              }}
+              className="board-card-btn board-card-btn-del"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="board-card-name">{board.title}</div>
+
+            <div className="board-card-actions">
+              <button
+                onClick={(e) => {
+                  setEditing(true);
+                  e.stopPropagation();
+                }}
+                disabled={loading}
+                className="board-card-btn board-card-btn-lg"
+              >
+                Изменить
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+                disabled={loading}
+                className="board-card-btn board-card-btn-del board-card-btn-lg"
+              >
+                Удалить
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

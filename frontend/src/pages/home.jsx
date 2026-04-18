@@ -21,6 +21,7 @@ function Home() {
   const [search, setSearch] = useState("");
 
   const [newBoardTitle, setNewBoardTitle] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     // если не авторизован - редиректим на логин
@@ -31,12 +32,18 @@ function Home() {
     dispatch(fetchBoards(user.id));
   }, [dispatch, user, navigate]);
 
-  const handleCreateBoard = () => {
-    if (!newBoardTitle.trim()) {
-      return;
+  const handleCreateBoard = async () => {
+    if (!newBoardTitle.trim()) return;
+
+    try {
+      await dispatch(
+        createBoard({ title: newBoardTitle, userId: user.id }),
+      ).unwrap();
+      setIsCreating(false);
+      setNewBoardTitle("");
+    } catch (err) {
+      console.error("Ошибка создания:", err);
     }
-    dispatch(createBoard({ title: newBoardTitle, userId: user.id }));
-    setNewBoardTitle("");
   };
 
   const handleDeleteAll = () => {
@@ -57,15 +64,22 @@ function Home() {
 
   const isEmpty = filteredBoards.length === 0 && !loading && !error;
   const isSearching = search.length > 0;
+  const hasBoards = filteredBoards.length > 0;
 
   if (loading && boards.length === 0) {
     return (
       <div className="home-page">
+        <Topbar
+          title="Доски"
+          user={user}
+          showLogout={true}
+          onLogout={handleLogout}
+        />
         <div className="home-body">
           <div className="empty-state">
             <div className="empty-state-icon">
               <span className="spinner spinner-lg"></span>
-              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -75,7 +89,7 @@ function Home() {
   return (
     <div className="home-page">
       <Topbar
-        title="Мои доски"
+        title="Доски"
         user={user}
         showLogout={true}
         onLogout={handleLogout}
@@ -83,7 +97,7 @@ function Home() {
 
       <div className="home-body">
         {error && (
-          <div className="empty-state">
+          <div className="empty-state mb-16">
             <div className="empty-state-text">{error}</div>
             <button
               onClick={() => dispatch(fetchBoards(user.id))}
@@ -96,16 +110,16 @@ function Home() {
 
         <div className="home-toolbar">
           <div className="search-wrapper">
-          <i className="fa-solid fa-magnifying-glass search-icon"></i>
-          <input
-            className="home-search"
-            placeholder="Поиск доски..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+            <i className="fa-solid fa-magnifying-glass search-icon"></i>
+            <input
+              className="home-search"
+              placeholder="Поиск доски..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
 
-          {boards.length > 0 && (
+          {filteredBoards.length > 0 && (
             <button
               onClick={handleDeleteAll}
               disabled={actionLoading && actionType === "deleteAll"}
@@ -118,20 +132,93 @@ function Home() {
           )}
         </div>
 
-        {filteredBoards.length > 0 && (
-          <div className="boards-grid">
-            {filteredBoards.map((board) => (
-              <BoardItem key={board.id} board={board} />
-            ))}
-          </div>
-        )}
+        {/*{filteredBoards.length > 0 ? (*/}
+        <div className="boards-grid">
+          {filteredBoards.map((board, idx) => (
+            <BoardItem
+              key={board.id}
+              board={board}
+              accentClass={`accent-${idx % 10}`}
+            />
+          ))}
 
-        {isEmpty && (
-          <div className="empty-state">
-            <div className="empty-state-icon">{isSearching ? (
-              <i className="fa-solid fa-magnifying-glass"></i>
+          {isCreating ? (
+            <div className="board-card" onClick={(e) => e.stopPropagation()}>
+              <div className="board-card-accent accent-0" />
+              <div className="board-card-body">
+                <input
+                  autoFocus
+                  className="input mb-8"
+                  placeholder="Название доски..."
+                  value={newBoardTitle}
+                  onChange={(e) => setNewBoardTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleCreateBoard();
+                      {
+                        /*setIsCreating(false);*/
+                      }
+                    }
+                    if (e.key === "Escape") {
+                      setIsCreating(false);
+                      setNewBoardTitle("");
+                    }
+                  }}
+                />
+                <div className="board-card-actions">
+                  <button
+                    onClick={() => {
+                      handleCreateBoard();
+                      {
+                        /*setIsCreating(false);*/
+                      }
+                    }}
+                    disabled={
+                      !newBoardTitle.trim() ||
+                      (actionLoading && actionType === "create")
+                    }
+                    className="board-card-btn"
+                  >
+                    {actionLoading && actionType === "create" ? (
+                      <>
+                        <span className="spinner"></span>
+                        <span>создание...</span>
+                      </>
+                    ) : (
+                      "Создать"
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsCreating(false);
+                      setNewBoardTitle("");
+                    }}
+                    className="board-card-btn board-card-btn-del"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="board-card board-card-new"
+              onClick={() => setIsCreating(true)}
+            >
+              <div className="board-card-new-icon">+</div>
+              <span className="board-card-new-label">Новая доска</span>
+            </div>
+          )}
+        </div>
+
+        {!hasBoards && !error && !loading && (
+          <div className="empty-state mt-20">
+            <div className="empty-state-icon">
+              {isSearching ? (
+                <i className="fa-solid fa-magnifying-glass"></i>
               ) : (
-              <i className="fa-solid fa-clipboard"></i>
+                <i className="fa-solid fa-clipboard"></i>
               )}
             </div>
             <div className="empty-state-text">
@@ -141,35 +228,6 @@ function Home() {
             </div>
           </div>
         )}
-
-        <div className="create-board-row">
-          <input
-            className="home-search"
-            style={{ backgroundImage: "none", paddingLeft: "12px" }}
-            value={newBoardTitle}
-            onChange={(e) => setNewBoardTitle(e.target.value)}
-            placeholder="Название доски"
-            disabled={actionLoading && actionType === "create"}
-            onKeyDown={(e) => e.key === "Enter" && handleCreateBoard()}
-          />
-          <button
-            onClick={handleCreateBoard}
-            disabled={
-              (actionLoading && actionType === "create") ||
-              !newBoardTitle.trim()
-            }
-            className="board-card-btn"
-          >
-            {actionLoading && actionType === "create" ? (
-              <>
-                <span className="spinner"></span>
-                <span className="loading-text">Создание...</span>
-              </>
-            ) : (
-              "Создать"
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );

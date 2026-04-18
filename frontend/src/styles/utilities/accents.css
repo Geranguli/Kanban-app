@@ -1,23 +1,39 @@
 .accent-0 {
-    background: #534AB7;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .accent-1 {
-    background: #1D9E75;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
 .accent-2 {
-    background: #D85A30;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
 .accent-3 {
-    background: #D4537E;
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
 }
 
 .accent-4 {
-    background: #378ADD;
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
 .accent-5 {
-    background: #BA7517;
+    background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+}
+
+.accent-6 {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+}
+
+.accent-7 {
+    background: linear-gradient(135deg, #5ee7df 0%, #b490ca 100%);
+}
+
+.accent-8 {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.accent-9 {
+    background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
 }
