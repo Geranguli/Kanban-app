@@ -12,8 +12,9 @@ import CardItem from "./CardItem";
 function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
 
-  //loading из глобала (ошибки - локальные) для создания карточки
-  const { loading: cardLoading } = useSelector((state) => state.cards);
+  const { loading: cardLoading, actionType: cardActionType } = useSelector(
+    (state) => state.cards,
+  );
 
   // локальный loading для колонки (редактирование/удаление)
   const [isLoading, setIsLoading] = useState(false);
@@ -126,83 +127,88 @@ function ColumnItem({ column, cards, onEditCard }) {
     }, 0);
   };
 
-  // общий loading статус
-  const loading = isLoading || cardLoading;
+  //const loading = isLoading || cardLoading;
 
   return (
     <div
       ref={setNodeRef}
-      className="column"
-      style={{
-        minHeight: "150px",
-        background: isOver ? "#e3f2fd" : "#f4f5f7",
-        padding: "10px",
-        borderRadius: "8px",
-      }}
+      className={`column${isOver ? " drag-over" : ""}${isLoading ? " loading" : ""}`}
     >
-      {editing ? (
-        <>
-          <input
-            className="input"
-            value={title}
-            autoFocus
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleUpdateColumn}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleUpdateColumn();
-            }}
-            disabled={isLoading}
-          />
-          <button
-            onClick={handleUpdateColumn}
-            disabled={isLoading}
-            className={`btn btn-primary mt-6 ${isLoading ? "loading" : ""}`}
-          >
-            {isLoading ? (
-              <>
-                <span className="spinner"></span>
-                <span className="loading-text">Сохранение...</span>
-              </>
-            ) : (
-              "Сохранить"
-            )}
-          </button>
-        </>
-      ) : (
-        <>
-          <h3 className="accent-0">{column.title}</h3>
-          <button
-            onClick={() => !isLoading && setEditing(true)}
-            disabled={isLoading}
-            className="btn btn-ghost mt-6"
-          >
-            Edit
-          </button>
+      <div className="column-header">
+        {editing ? (
+          <>
+            <input
+              className="input"
+              value={title}
+              autoFocus
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleUpdateColumn}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleUpdateColumn();
+              }}
+              disabled={isLoading}
+            />
+          </>
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span className="column-title">{column.title}</span>
+              <span className="column-count">{cards.length}</span>
+            </div>
 
-          <button
-            onClick={handleDeleteColumn}
-            disabled={isLoading}
-            className="btn btn-danger mt-6"
-          >
-            {isLoading ? (
-              <span className="loading-text">Удаление...</span>
-            ) : (
-              "Delete"
-            )}
-          </button>
-        </>
+            <div className="column-actions">
+              <button
+                onClick={() => !isLoading && setEditing(true)}
+                disabled={isLoading}
+                className="column-action-btn"
+                title="Редактировать"
+              >
+                <i className="fa-solid fa-pen"></i>
+              </button>
+              <button
+                onClick={handleDeleteColumn}
+                disabled={isLoading}
+                className="column-action-btn"
+                title="Удалить колонку"
+              >
+                {isLoading ? (
+                  <span className="spinner" />
+                ) : (
+                  <i className="fa-solid fa-xmark"></i>
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {editing && (
+        <button
+          onClick={handleUpdateColumn}
+          disabled={isLoading}
+          className={`btn btn-primary mt-6 ${isLoading ? "loading" : ""}`}
+        >
+          {isLoading ? (
+            <>
+              <span className="spinner"></span>
+              <span className="loading-text">Сохранение...</span>
+            </>
+          ) : (
+            "Сохранить"
+          )}
+        </button>
       )}
       {error && (
-        <div className="error-box">
-          <p>{error}</p>
+        <div className="error-box mt-8">
+          <p style={{ margin: 0 }}>{error}</p>
 
           {lastCardData && (
             <button
               onClick={handleRetry}
-              disabled={loading}
-              className="btn btn-primary mt-8"
+              //disabled={loading}
+              className="btn btn-primary"
             >
-              Исправить и повторить
+              Повторить
             </button>
           )}
         </div>
@@ -218,7 +224,7 @@ function ColumnItem({ column, cards, onEditCard }) {
         ))}
       </SortableContext>
 
-      <div className="form mt-16">
+      <div className="form mt-10">
         <input
           className="input"
           placeholder="Title"
@@ -230,7 +236,7 @@ function ColumnItem({ column, cards, onEditCard }) {
           disabled={cardLoading}
         />
         <textarea
-          className="input"
+          className="input mt-6"
           placeholder="Description"
           value={newCard.description}
           onChange={(e) =>
@@ -239,7 +245,7 @@ function ColumnItem({ column, cards, onEditCard }) {
           disabled={cardLoading}
         />
         <input
-          className="input"
+          className="input mt-6"
           type="date"
           min={today}
           value={newCard.due_date}
@@ -248,16 +254,16 @@ function ColumnItem({ column, cards, onEditCard }) {
         />
         <button
           onClick={handleCreateCard}
-          disabled={loading}
-          className="btn btn-primary mt-10"
+          disabled={cardLoading && cardActionType === "create"}
+          className="btn btn-primary mt-8"
         >
-          {loading ? (
+          {cardLoading && cardActionType === "create" ? (
             <>
               <span className="spinner"></span>
               <span className="loading-text">Создание...</span>
             </>
           ) : (
-            "Add card"
+            "+ Add card"
           )}
         </button>
       </div>

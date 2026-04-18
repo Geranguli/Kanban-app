@@ -109,6 +109,7 @@ const cardsSlice = createSlice({
   initialState: {
     cards: [],
     loading: false,
+    actionType: null,
     error: null,
   },
   reducers: {
@@ -185,14 +186,17 @@ const cardsSlice = createSlice({
       //create
       .addCase(createCard.pending, (state) => {
         state.loading = true;
+        state.actionType = "create";
         state.error = null;
       })
       .addCase(createCard.fulfilled, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.cards.push(action.payload);
       })
       .addCase(createCard.rejected, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.error =
           action.payload?.message ||
           action.payload ||
@@ -201,14 +205,17 @@ const cardsSlice = createSlice({
       //delete
       .addCase(deleteCard.pending, (state) => {
         state.loading = true;
+        state.actionType = "delete";
         state.error = null;
       })
       .addCase(deleteCard.fulfilled, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.cards = state.cards.filter((c) => c.id !== action.payload);
       })
       .addCase(deleteCard.rejected, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.error =
           action.payload?.message ||
           action.payload ||
@@ -217,10 +224,12 @@ const cardsSlice = createSlice({
       //update
       .addCase(updateCard.pending, (state) => {
         state.loading = true;
+        state.actionType = "update";
         state.error = null;
       })
       .addCase(updateCard.fulfilled, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         const index = state.cards.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) {
           state.cards[index] = action.payload;
@@ -228,16 +237,19 @@ const cardsSlice = createSlice({
       })
       .addCase(updateCard.rejected, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.error =
           action.payload?.message || action.payload || "Ошибка обновления";
       })
       //upload
       .addCase(uploadImages.pending, (state) => {
         state.loading = true;
+        state.actionType = "upload";
         state.error = null;
       })
       .addCase(uploadImages.fulfilled, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         const index = state.cards.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) {
           state.cards[index] = action.payload;
@@ -245,6 +257,7 @@ const cardsSlice = createSlice({
       })
       .addCase(uploadImages.rejected, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.error =
           action.payload?.message ||
           action.payload ||
@@ -253,10 +266,12 @@ const cardsSlice = createSlice({
       //deleteImage
       .addCase(deleteImage.pending, (state) => {
         state.loading = true;
+        state.actionType = "deleteImage";
         state.error = null;
       })
       .addCase(deleteImage.fulfilled, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         // Находим карточку и удаляем картинку из её массива
         const card = state.cards.find((c) =>
           c.images?.some((img) => img.id === action.payload),
@@ -267,6 +282,7 @@ const cardsSlice = createSlice({
       })
       .addCase(deleteImage.rejected, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.error =
           action.payload?.message ||
           action.payload ||
@@ -275,15 +291,18 @@ const cardsSlice = createSlice({
       //обновляем карточки после перемещения
       .addCase(moveCard.pending, (state) => {
         state.loading = true;
+        state.actionType = "moveCard";
         state.error = null;
       })
       .addCase(moveCard.fulfilled, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         const index = state.cards.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) state.cards[index] = action.payload;
       })
       .addCase(moveCard.rejected, (state, action) => {
         state.loading = false;
+        state.actionType = null;
         state.error = action.payload || "Ошибка перемещения";
       });
   },
