@@ -1,0 +1,56 @@
+.card-form {
+    margin-top: 8px;
+    background: #f4f5f7;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.card-form input,
+.card-form textarea {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 13px;
+    border: 1px solid #c1c7d0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #172b4d;
+    margin-bottom: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.card-form input:focus,
+.card-form textarea:focus {
+    border-color: #534AB7;
+}
+
+.card-form textarea {
+    resize: none;
+    height: 60px;
+}
+
+.card-form-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.add-card-btn {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1.5px dashed #797e86;
+    border-radius: 8px;
+    background: transparent;
+    color: #383f4d;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s;
+    margin-top: 6px;
+}
+
+.add-card-btn:hover {
+    border-color: #534AB7;
+    color: #534AB7;
+    background: #EEEDFE;
+}

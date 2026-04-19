@@ -18,7 +18,7 @@ function Topbar({
           </>
         )}
         <div className="topbar-breadcrumb">
-          {title && title !== "Мои доски" ? (
+          {title && title !== "Доски" ? (
             <>
               Доски <span>/</span> <span>{title}</span>
             </>

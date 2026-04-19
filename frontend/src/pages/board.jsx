@@ -36,8 +36,12 @@ function Board() {
   const board = boards.find((b) => b.id === Number(id));
 
   const [newColumnTitle, setNewColumnTitle] = useState("");
+  const [showAddColumn, setShowAddColumn] = useState(false);
+
   const [editingCard, setEditingCard] = useState(null);
   const [activeCard, setActiveCard] = useState(null);
+
+  const [initialCards, setInitialCards] = useState([]);
 
   //группируем карточки по колонкам и сортируем
   const cardsByColumn = useMemo(() => {
@@ -84,10 +88,18 @@ function Board() {
     }
   }, [dispatch, user, boards.length]);
 
-  const handleCreateColumn = () => {
+  const handleCreateColumn = async () => {
     if (!newColumnTitle.trim()) return;
-    dispatch(createColumn({ boardId: id, title: newColumnTitle }));
+    await dispatch(
+      createColumn({ boardId: id, title: newColumnTitle }),
+    ).unwrap();
     setNewColumnTitle("");
+    setShowAddColumn(false);
+  };
+
+  const handleCancelAddColumn = () => {
+    setNewColumnTitle("");
+    setShowAddColumn(false);
   };
 
   const handleLogout = () => {
@@ -103,13 +115,13 @@ function Board() {
   const handleDragStart = (event) => {
     const card = cards.find((c) => c.id === event.active.id);
     setActiveCard(card); //сохраняем карточку для dragoverlay
+    setInitialCards(cards);
   };
 
   const handleDragOver = useCallback(
     (event) => {
       const { active, over } = event;
       if (!over) return;
-
       const activeCard = cards.find((c) => c.id === active.id);
       if (!activeCard) return;
 
@@ -141,32 +153,53 @@ function Board() {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     setActiveCard(null);
+    setInitialCards([]);
 
     //если бросили вне зоны ничего не делаем
     if (!over) return;
 
-    const activeCard = cards.find((c) => c.id === active.id);
+    const activeCard = initialCards.find((c) => c.id === active.id);
     if (!activeCard) return;
 
     //новая колонка и позиция
     let newColumnId;
     let newPosition;
     const overData = over.data?.current;
-    const overCard = cards.find((c) => c.id === over.id);
+    const overCard = initialCards.find((c) => c.id === over.id);
 
     if (overCard) {
       // бросили на другую карточку - встаём перед ней
       newColumnId = overCard.column_id;
 
-      const cardsInColumn = cardsByColumn[newColumnId] || [];
+      const cardsInColumn = initialCards
+        .filter((c) => c.column_id === newColumnId)
+        .sort((a, b) => a.position - b.position);
       newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
     } else if (overData?.type === "column") {
       // бросили на пустую колонку - встаём в конец
       newColumnId = overData.columnId;
-      newPosition = (cardsByColumn[newColumnId] || []).length;
+      newPosition = initialCards.filter(
+        (c) => c.column_id === newColumnId,
+      ).length;
     } else {
       return;
     }
+
+    const oldIndex = initialCards
+      .filter((c) => c.column_id === activeCard.column_id)
+      .sort((a, b) => a.position - b.position)
+      .findIndex((c) => c.id === activeCard.id);
+
+    if (activeCard.column_id === newColumnId && oldIndex === newPosition)
+      return;
+
+    dispatch(
+      moveCardOptimistic({
+        cardId: active.id,
+        newColumn: newColumnId,
+        newPosition,
+      }),
+    );
 
     try {
       await dispatch(
@@ -218,8 +251,8 @@ function Board() {
             )}
 
             <DndContext
-              //collisionDetection={pointerWithin}
-              collisionDetection={closestCenter}
+              collisionDetection={pointerWithin}
+              //collisionDetection={closestCenter}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
@@ -233,6 +266,50 @@ function Board() {
                     onEditCard={setEditingCard}
                   />
                 ))}
+                {showAddColumn ? (
+                  <div className="add-column-wrap">
+                    <div className="add-column-form">
+                      <input
+                        placeholder="Название колонки..."
+                        value={newColumnTitle}
+                        onChange={(e) => setNewColumnTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleCreateColumn();
+                        }}
+                        autoFocus
+                      />
+                      <div className="card-form-actions">
+                        <button
+                          onClick={handleCreateColumn}
+                          disabled={columnsLoading}
+                          className="btn btn-primary"
+                        >
+                          {columnsLoading ? (
+                            <>
+                              <span className="spinner"></span>
+                              <span className="loading-text">Создание...</span>
+                            </>
+                          ) : (
+                            "Добавить"
+                          )}
+                        </button>
+                        <button
+                          onClick={handleCancelAddColumn}
+                          className="btn btn-ghost"
+                        >
+                          Отмена
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowAddColumn(true)}
+                    className="add-column-trigger"
+                  >
+                    + Добавить колонку
+                  </button>
+                )}
               </div>
 
               <DragOverlay>
@@ -244,38 +321,14 @@ function Board() {
               </DragOverlay>
             </DndContext>
 
-            <div className="form mt-20">
-              <input
-                className="input"
-                value={newColumnTitle}
-                onChange={(e) => setNewColumnTitle(e.target.value)}
-                placeholder="Column title"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCreateColumn();
-                }}
-              />
-              <button
-                onClick={handleCreateColumn}
-                disabled={columnsLoading}
-                className="btn btn-primary"
-              >
-                {columnsLoading ? (
-                  <>
-                    <span className="spinner"></span>
-                    <span className="loading-text">Создание...</span>
-                  </>
-                ) : (
-                  "Создать колонку"
-                )}
-              </button>
-            </div>
+            <CardModal
+              card={editingCard}
+              onClose={() => setEditingCard(null)}
+            />
           </>
         )}
       </div>
-
-      <CardModal card={editingCard} onClose={() => setEditingCard(null)} />
     </div>
   );
 }
-
 export default Board;

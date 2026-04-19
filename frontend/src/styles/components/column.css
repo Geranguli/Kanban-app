@@ -5,6 +5,7 @@
     flex-shrink: 0;
     padding: 10px;
     transition: background 0.15s;
+
 }
 
 .column.drag-over {
@@ -70,3 +71,4 @@
     background: #FCEBEB;
     color: #A32D2D;
 }
+

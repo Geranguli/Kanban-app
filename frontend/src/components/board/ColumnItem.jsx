@@ -19,6 +19,8 @@ function ColumnItem({ column, cards, onEditCard }) {
   // локальный loading для колонки (редактирование/удаление)
   const [isLoading, setIsLoading] = useState(false);
 
+  const [showForm, setShowForm] = useState(false);
+
   // делаем колонку drop-зоной для карточек
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${column.id}`,
@@ -101,11 +103,19 @@ function ColumnItem({ column, cards, onEditCard }) {
       });
 
       setLastCardData(null);
+      setShowForm(false);
     } catch (err) {
       setError(err?.message || err || "Ошибка создания карточки");
       console.error("Ошибка создания карточки:", err);
     }
   };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setNewCard({ title: "", description: "", due_date: "" });
+    setError(null);
+  };
+
   //восстановление формы при "повторить"
   const handleRetry = () => {
     if (!lastCardData) return;
@@ -121,13 +131,11 @@ function ColumnItem({ column, cards, onEditCard }) {
     // фокус на заголовок
     setTimeout(() => {
       const input = document.querySelector(
-        `.column input[placeholder="Title"]`,
+        `.card-form input[placeholder="Заголовок"]`,
       );
       input?.focus();
     }, 0);
   };
-
-  //const loading = isLoading || cardLoading;
 
   return (
     <div
@@ -153,7 +161,6 @@ function ColumnItem({ column, cards, onEditCard }) {
           <>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span className="column-title">{column.title}</span>
-              <span className="column-count">{cards.length}</span>
             </div>
 
             <div className="column-actions">
@@ -224,49 +231,60 @@ function ColumnItem({ column, cards, onEditCard }) {
         ))}
       </SortableContext>
 
-      <div className="form mt-10">
-        <input
-          className="input"
-          placeholder="Title"
-          value={newCard.title}
-          onChange={(e) => setNewCard({ ...newCard, title: e.target.value })}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleCreateCard();
-          }}
-          disabled={cardLoading}
-        />
-        <textarea
-          className="input mt-6"
-          placeholder="Description"
-          value={newCard.description}
-          onChange={(e) =>
-            setNewCard({ ...newCard, description: e.target.value })
-          }
-          disabled={cardLoading}
-        />
-        <input
-          className="input mt-6"
-          type="date"
-          min={today}
-          value={newCard.due_date}
-          onChange={(e) => setNewCard({ ...newCard, due_date: e.target.value })}
-          disabled={cardLoading}
-        />
-        <button
-          onClick={handleCreateCard}
-          disabled={cardLoading && cardActionType === "create"}
-          className="btn btn-primary mt-8"
-        >
-          {cardLoading && cardActionType === "create" ? (
-            <>
-              <span className="spinner"></span>
-              <span className="loading-text">Создание...</span>
-            </>
-          ) : (
-            "+ Add card"
-          )}
+      {showForm ? (
+        <div className="card-form">
+          <input
+            placeholder="Заголовок"
+            value={newCard.title}
+            onChange={(e) => setNewCard({ ...newCard, title: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) handleCreateCard();
+            }}
+            disabled={cardLoading}
+            autoFocus
+          />
+          <textarea
+            placeholder="Описание"
+            value={newCard.description}
+            onChange={(e) =>
+              setNewCard({ ...newCard, description: e.target.value })
+            }
+            disabled={cardLoading}
+          />
+          <input
+            type="date"
+            min={today}
+            value={newCard.due_date}
+            onChange={(e) =>
+              setNewCard({ ...newCard, due_date: e.target.value })
+            }
+            disabled={cardLoading}
+          />
+          <div className="card-form-actions">
+            <button
+              onClick={handleCreateCard}
+              disabled={cardLoading && cardActionType === "create"}
+              className="btn btn-primary"
+            >
+              {cardLoading && cardActionType === "create" ? (
+                <>
+                  <span className="spinner"></span>
+                  <span className="loading-text">Создание...</span>
+                </>
+              ) : (
+                "Добавить"
+              )}
+            </button>
+            <button onClick={handleCancel} className="btn btn-ghost">
+              Отмена
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowForm(true)} className="add-card-btn mt-6">
+          + Добавить карточку
         </button>
-      </div>
+      )}
     </div>
   );
 }
