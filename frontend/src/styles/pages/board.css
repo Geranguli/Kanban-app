@@ -19,28 +19,6 @@
   color: #172b4d;
 }
 
-/*.board-tabs {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.board-tab {
-  padding: 4px 12px;
-  font-size: 13px;
-  border: none;
-  background: transparent;
-  color: #626f86;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.board-tab.active {
-  background: #EEEDFE;
-  color: #534AB7;
-  font-weight: 500;
-}
-*/
 .board-content {
   padding: 20px 24px;
   overflow-x: auto;

@@ -29,6 +29,9 @@ function CardItem({ card, onEdit }) {
     transition,
   };
 
+  const images = card.images || [];
+  const coverImage = images.length > 0 ? images[0] : null;
+
   const isOverdue = card.due_date && new Date(card.due_date) < new Date();
 
   const handleDelete = async (e) => {
@@ -40,6 +43,7 @@ function CardItem({ card, onEdit }) {
       await dispatch(deleteCard(card.id)).unwrap();
     } catch (err) {
       setError(err || "Ошибка удаления карточки");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -50,67 +54,82 @@ function CardItem({ card, onEdit }) {
       onEdit(card);
     }
   };
+
+  const handleImgDragStart = (e) => {
+    e.preventDefault();
+  };
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style }}
+      style={style}
       className={`card ${isDragging ? "dragging" : ""}`}
+      {...attributes}
+      {...listeners}
     >
+      {coverImage && (
+        <div className="card-cover-wrap">
+          <img
+            src={`http://localhost:8000/${coverImage.url}`}
+            alt=""
+            className="card-cover"
+            onClick={(e) => e.stopPropagation()}
+            onDragStart={handleImgDragStart}
+          />
+        </div>
+      )}
+
       {/* область для перетаскивания */}
-      <div
-        {...attributes}
-        {...listeners}
-        style={{ cursor: isLoading ? "not-allowed" : "grab" }}
-        onClick={(e) => e.stopPropagation()} //чтобы drag не конфликтовал с кликами
-      >
-        ⠿
-      </div>
-
-      <div>{card.title || "Без названия"}</div>
-
-      {card.description && <div>{card.description}</div>}
-
-      {/* не рендерим пустые блоки */}
-      {card.due_date && (
-        <div className={`card-date ${isOverdue ? "overdue" : ""}`}>
-          {card.due_date}
+      <div className="card-body">
+        <div className="card-header">
+          <div className="card-title">{card.title || "Без названия"}</div>
         </div>
-      )}
 
-      {error && <div className="error-inline mt-8">{error}</div>}
-
-      <button
-        onClick={handleEdit}
-        disabled={isLoading}
-        className="btn btn-primary mt-6"
-      >
-        Edit
-      </button>
-
-      <button
-        onClick={handleDelete}
-        disabled={isLoading}
-        className="btn btn-danger mt-6"
-      >
-        {isLoading ? (
-          <span className="loading-text">Удаление...</span>
-        ) : (
-          "Delete"
+        {card.description && (
+          <div className="card-desc">{card.description}</div>
         )}
-      </button>
 
-      {card.images && card.images.length > 0 && (
-        <div className="card-images mt-8">
-          {card.images.map((img) => (
-            <img
-              key={img.id}
-              src={`http://localhost:8000/${img.url}`}
-              alt=""
-              style={{ width: "100%", borderRadius: "6px" }}
-            />
-          ))}
+        {images.length > 0 && (
+          <div className="card-images-count">
+            <i className="fa-regular fa-image"></i>
+            {images.length}
+          </div>
+        )}
+
+        <div className="card-footer">
+          {card.due_date && (
+            <span className={`card-due ${isOverdue ? "overdue" : "ok"}`}>
+              {card.due_date}
+            </span>
+          )}
+
+          <div className="card-btns">
+            <button
+              onClick={handleEdit}
+              disabled={isLoading}
+              className="card-btn"
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <i className="fa-solid fa-pen"></i>
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="card-btn card-btn-del"
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {isLoading ? (
+                <span className="loading-text">Удаление...</span>
+              ) : (
+                <i className="fa-solid fa-xmark"></i>
+              )}
+            </button>
+          </div>
         </div>
-      )}
+
+        {error && <div className="error-inline mt-8">{error}</div>}
+      </div>
     </div>
   );
 }

@@ -120,48 +120,47 @@ const cardsSlice = createSlice({
     moveCardOptimistic(state, action) {
       const { cardId, newColumn, newPosition } = action.payload;
 
-      const card = state.cards.find((c) => c.id === cardId);
-      if (!card) return;
+      const oldIndex = state.cards.findIndex((c) => c.id === cardId);
+      if (oldIndex === -1) return;
 
-      const oldColumn = card.column_id;
-      const oldPosition = card.position;
+      const card = { ...state.cards[oldIndex] };
 
-      const sameColumn = oldColumn === newColumn;
+      // Удаляем из старого места
+      state.cards.splice(oldIndex, 1);
 
-      if (sameColumn) {
-        //внутри той же колонки
-        state.cards.forEach((c) => {
-          if (c.column_id !== oldColumn || c.id === cardId) return;
+      // Меняем колонку
+      card.column_id = newColumn;
 
-          // сдвигаем вниз - карточки сдвигаются вверх
-          if (newPosition < oldPosition) {
-            if (c.position >= newPosition && c.position < oldPosition) {
-              c.position += 1;
-            }
-          }
-          // сдвигаем вверх - карточки сдвигаются вниз
-          else if (newPosition > oldPosition) {
-            if (c.position <= newPosition && c.position > oldPosition) {
-              c.position -= 1;
-            }
-          }
-        });
+      // Находим карточки новой колонки (уже без перемещаемой)
+      const cardsInColumn = state.cards.filter(
+        (c) => c.column_id === newColumn,
+      );
+
+      let insertIndex;
+      if (cardsInColumn.length === 0) {
+        insertIndex = state.cards.length;
+      } else if (newPosition >= cardsInColumn.length) {
+        const lastCard = cardsInColumn[cardsInColumn.length - 1];
+        insertIndex = state.cards.findIndex((c) => c.id === lastCard.id) + 1;
       } else {
-        // разные колонки
-        state.cards.forEach((c) => {
-          //в старой колонке карточки - верх
-          if (c.column_id === newColumn && c.position >= newPosition) {
-            c.position += 1;
-          }
-          //в новой карточки - вниз
-          if (c.column_id === oldColumn && c.position > oldPosition) {
-            c.position -= 1;
-          }
-        });
+        const targetCard = cardsInColumn[newPosition];
+        insertIndex = state.cards.findIndex((c) => c.id === targetCard.id);
       }
 
-      card.column_id = newColumn;
-      card.position = newPosition;
+      // Вставляем в нужное место
+      state.cards.splice(insertIndex, 0, card);
+
+      // Пересчитываем position для всех карточек
+      const grouped = {};
+      state.cards.forEach((c) => {
+        if (!grouped[c.column_id]) grouped[c.column_id] = [];
+        grouped[c.column_id].push(c);
+      });
+      Object.values(grouped).forEach((arr) => {
+        arr.forEach((c, i) => {
+          c.position = i;
+        });
+      });
     },
   },
 

@@ -6,10 +6,16 @@ import { fetchCards, moveCard, moveCardOptimistic } from "../store/cardsSlice";
 import { fetchBoards } from "../store/boardsSlice";
 import ColumnItem from "../components/board/ColumnItem";
 import CardModal from "../components/board/CardModal";
+import CardItem from "../components/board/CardItem";
 import Topbar from "../styles/layout/topbar";
 import { logout } from "../store/userSlice";
 
-import { DndContext, pointerWithin, DragOverlay } from "@dnd-kit/core";
+import {
+  DndContext,
+  pointerWithin,
+  DragOverlay,
+  closestCenter,
+} from "@dnd-kit/core";
 
 function Board() {
   const { id } = useParams();
@@ -99,6 +105,39 @@ function Board() {
     setActiveCard(card); //сохраняем карточку для dragoverlay
   };
 
+  const handleDragOver = useCallback(
+    (event) => {
+      const { active, over } = event;
+      if (!over) return;
+
+      const activeCard = cards.find((c) => c.id === active.id);
+      if (!activeCard) return;
+
+      const overCard = cards.find((c) => c.id === over.id);
+      const overData = over.data?.current;
+
+      let targetColumnId;
+      if (overCard) {
+        targetColumnId = overCard.column_id;
+      } else if (overData?.type === "column") {
+        targetColumnId = overData.columnId;
+      } else return;
+
+      // Если карточка уже в этой колонке — не делаем лишних обновлений
+      if (activeCard.column_id === targetColumnId) return;
+
+      // перемещаем в новую колонку (в конец)
+      dispatch(
+        moveCardOptimistic({
+          cardId: active.id,
+          newColumn: targetColumnId,
+          newPosition: (cardsByColumn[targetColumnId] || []).length,
+        }),
+      );
+    },
+    [cards, cardsByColumn, dispatch],
+  );
+
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     setActiveCard(null);
@@ -120,34 +159,14 @@ function Board() {
       newColumnId = overCard.column_id;
 
       const cardsInColumn = cardsByColumn[newColumnId] || [];
-      const overIndex = cardsInColumn.findIndex((c) => c.id === over.id);
-
-      newPosition = overIndex;
+      newPosition = cardsInColumn.findIndex((c) => c.id === over.id);
     } else if (overData?.type === "column") {
       // бросили на пустую колонку - встаём в конец
       newColumnId = overData.columnId;
-      const cardsInColumn = cardsByColumn[newColumnId] || [];
-      newPosition = cardsInColumn.length;
+      newPosition = (cardsByColumn[newColumnId] || []).length;
     } else {
       return;
     }
-
-    const oldIndex = (cardsByColumn[activeCard.column_id] || []).findIndex(
-      (c) => c.id === activeCard.id,
-    );
-
-    //ничего не изменилось - ничего не делаем
-    if (activeCard.column_id === newColumnId && oldIndex === newPosition) {
-      return;
-    }
-    //новое обновление
-    dispatch(
-      moveCardOptimistic({
-        cardId: active.id,
-        newColumn: newColumnId,
-        newPosition,
-      }),
-    );
 
     try {
       await dispatch(
@@ -199,8 +218,10 @@ function Board() {
             )}
 
             <DndContext
-              collisionDetection={pointerWithin}
+              //collisionDetection={pointerWithin}
+              collisionDetection={closestCenter}
               onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
             >
               <div className="columns-wrap">
@@ -216,8 +237,8 @@ function Board() {
 
               <DragOverlay>
                 {activeCard ? (
-                  <div className="card dragging-preview">
-                    {activeCard.title}
+                  <div className="card-preview">
+                    <CardItem card={activeCard} onEdit={() => {}} />
                   </div>
                 ) : null}
               </DragOverlay>

@@ -1,0 +1,144 @@
+.card {
+    background: #ffffff;
+    border: 1px solid #e4e6ea;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: border-color 0.15s;
+    user-select: none;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.card:active {
+    cursor: grabbing;
+}
+
+.card.dragging {
+    opacity: 0.5;
+    border: 1.5px dashed #7F77DD;
+    background: #EEEDFE;
+}
+
+.card-cover-wrap {
+    line-height: 0;
+    pointer-events: none;
+}
+
+.card-cover {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: contain;
+    background: #f4f5f7;
+    display: block;
+}
+
+.card-body {
+    padding: 10px 12px;
+}
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.card-drag-handle {
+    color: #8993a4;
+    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.card-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #172b4d;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+
+}
+
+.card-desc {
+    font-size: 13px;
+    color: #282e37;
+    margin: 6px 0 8px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-images-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #454e5d;
+    margin-bottom: 8px;
+}
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.card-due {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.card-due.ok {
+    background: #EAF3DE;
+    color: #3B6D11;
+}
+
+.card-due.overdue {
+    background: #FCEBEB;
+    color: #A32D2D;
+}
+
+.card-btns {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.card-btn {
+    padding: 4px 9px;
+    font-size: 13px;
+    border: 1px solid #e4e6ea;
+    border-radius: 6px;
+    background: transparent;
+    color: #626f86;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.card-btn:hover {
+    background: #f4f5f7;
+}
+
+.card-btn-del:hover {
+    background: #FCEBEB;
+    border-color: #f09595;
+    color: #A32D2D;
+}
+
+.card-preview{
+    width: 252px;
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
