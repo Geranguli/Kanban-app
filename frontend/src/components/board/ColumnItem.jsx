@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteColumn, updateColumn } from "../../store/columnsSlice";
 import { createCard } from "../../store/cardsSlice";
@@ -9,19 +9,28 @@ import {
 import { useDroppable } from "@dnd-kit/core";
 import CardItem from "./CardItem";
 
-function ColumnItem({ column, cards, onEditCard }) {
+const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
 
   const { loading: cardLoading, actionType: cardActionType } = useSelector(
     (state) => state.cards,
   );
 
-  // локальный loading для колонки (редактирование/удаление)
   const [isLoading, setIsLoading] = useState(false);
-
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(column.title);
+  const [newCard, setNewCard] = useState({
+    title: "",
+    description: "",
+    due_date: "",
+  });
+  const [error, setError] = useState(null);
+  const [lastCardData, setLastCardData] = useState(null);
 
-  // делаем колонку drop-зоной для карточек
+  const today = new Date().toISOString().split("T")[0];
+
+  // Делаем колонку drop-зоной для карточек
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${column.id}`,
     data: {
@@ -29,23 +38,6 @@ function ColumnItem({ column, cards, onEditCard }) {
       columnId: column.id,
     },
   });
-  //редактирование колонки
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(column.title);
-
-  //создание карточки
-  const [newCard, setNewCard] = useState({
-    title: "",
-    description: "",
-    due_date: "",
-  });
-
-  //локальная ошибка не влияет на другие колонки
-  const [error, setError] = useState(null);
-  //сохраняем данные последней попытки для кнопки повторить
-  const [lastCardData, setLastCardData] = useState(null);
-
-  const today = new Date().toISOString().split("T")[0];
 
   const handleUpdateColumn = async () => {
     if (!title.trim()) return;
@@ -54,7 +46,6 @@ function ColumnItem({ column, cards, onEditCard }) {
 
     try {
       await dispatch(updateColumn({ columnId: column.id, title })).unwrap();
-
       setEditing(false);
     } catch (err) {
       setError(err?.message || "Ошибка обновления колонки");
@@ -85,7 +76,7 @@ function ColumnItem({ column, cards, onEditCard }) {
     if (!cardData.title.trim()) return;
 
     setError(null);
-    setLastCardData(cardData); // сохраняем на случай ошибки
+    setLastCardData(cardData);
 
     try {
       await dispatch(
@@ -95,13 +86,11 @@ function ColumnItem({ column, cards, onEditCard }) {
         }),
       ).unwrap();
 
-      // очищаем форму
       setNewCard({
         title: "",
         description: "",
         due_date: "",
       });
-
       setLastCardData(null);
       setShowForm(false);
     } catch (err) {
@@ -116,19 +105,14 @@ function ColumnItem({ column, cards, onEditCard }) {
     setError(null);
   };
 
-  //восстановление формы при "повторить"
   const handleRetry = () => {
     if (!lastCardData) return;
-
     setNewCard({
       title: lastCardData.title || "",
       description: lastCardData.description || "",
       due_date: lastCardData.due_date || "",
     });
-
     setError(null);
-
-    // фокус на заголовок
     setTimeout(() => {
       const input = document.querySelector(
         `.card-form input[placeholder="Заголовок"]`,
@@ -205,31 +189,28 @@ function ColumnItem({ column, cards, onEditCard }) {
           )}
         </button>
       )}
+
       {error && (
         <div className="error-box mt-8">
           <p style={{ margin: 0 }}>{error}</p>
-
           {lastCardData && (
-            <button
-              onClick={handleRetry}
-              //disabled={loading}
-              className="btn btn-primary"
-            >
+            <button onClick={handleRetry} className="btn btn-primary">
               Повторить
             </button>
           )}
         </div>
       )}
 
-      {/*передаем id карточек для правильного расчета позиций */}
-      <SortableContext
-        items={cards.map((card) => card.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        {cards.map((card) => (
-          <CardItem key={card.id} card={card} onEdit={onEditCard} />
-        ))}
-      </SortableContext>
+      <div className="column-body">
+        <SortableContext
+          items={cards.map((card) => card.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {cards.map((card) => (
+            <CardItem key={card.id} card={card} onEdit={onEditCard} />
+          ))}
+        </SortableContext>
+      </div>
 
       {showForm ? (
         <div className="card-form">
@@ -287,6 +268,6 @@ function ColumnItem({ column, cards, onEditCard }) {
       )}
     </div>
   );
-}
+});
 
 export default ColumnItem;

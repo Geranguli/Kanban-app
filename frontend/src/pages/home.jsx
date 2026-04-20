@@ -62,7 +62,6 @@ function Home() {
     board.title.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const isEmpty = filteredBoards.length === 0 && !loading && !error;
   const isSearching = search.length > 0;
   const hasBoards = filteredBoards.length > 0;
 
@@ -169,9 +168,6 @@ function Home() {
                   <button
                     onClick={() => {
                       handleCreateBoard();
-                      {
-                        /*setIsCreating(false);*/
-                      }
                     }}
                     disabled={
                       !newBoardTitle.trim() ||
@@ -194,9 +190,10 @@ function Home() {
                       setIsCreating(false);
                       setNewBoardTitle("");
                     }}
+                    disabled={actionLoading && actionType === "create"}
                     className="board-card-btn board-card-btn-del"
                   >
-                    <i className="fa-solid fa-xmark"></i>
+                    Закрыть
                   </button>
                 </div>
               </div>

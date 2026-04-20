@@ -1,11 +1,12 @@
 .column {
-    background: #ebecf0;
+background: #ebecf0;
     border-radius: 10px;
     width: 252px;
     flex-shrink: 0;
-    padding: 10px;
-    transition: background 0.15s;
-
+    display: flex;
+        flex-direction: column;
+    max-height: calc(90vh - 80px);
+        height: auto;
 }
 
 .column.drag-over {
@@ -19,7 +20,7 @@
 
 .column-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     margin-bottom: 10px;
     padding: 2px 2px 0;
@@ -31,6 +32,10 @@
     color: #2b313d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+
+    word-break: break-word;
+        overflow-wrap: anywhere;
+        white-space: normal;
 }
 
 .column-count {
@@ -72,3 +77,17 @@
     color: #A32D2D;
 }
 
+.column-body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
+
+.column-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.column-body::-webkit-scrollbar-thumb {
+    background: #c1c7d0;
+    border-radius: 6px;
+}

@@ -1,7 +1,20 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
 
-// получить карточки колонки
+//  один запрос на всю доску
+export const fetchBoardCards = createAsyncThunk(
+  "cards/fetchBoardCards",
+  async (boardId, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/cards/board/${boardId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  },
+);
+
+// Оставляем для создания/редактирования в модалке
 export const fetchCards = createAsyncThunk(
   "cards/fetchCards",
   async (columnId, { rejectWithValue }) => {
@@ -14,7 +27,6 @@ export const fetchCards = createAsyncThunk(
   },
 );
 
-// создать карточку
 export const createCard = createAsyncThunk(
   "cards/createCard",
   async ({ columnId, card }, { rejectWithValue }) => {
@@ -27,7 +39,7 @@ export const createCard = createAsyncThunk(
   },
 );
 
-// thunk для drag-and-drop: отправляем новую колонку и позицию
+// moveCard возвращает все карточки доски
 export const moveCard = createAsyncThunk(
   "cards/moveCard",
   async ({ cardId, newColumn, newPosition }, { rejectWithValue }) => {
@@ -36,14 +48,13 @@ export const moveCard = createAsyncThunk(
         new_column: newColumn,
         new_position: newPosition,
       });
-      return res.data;
+      return res.data; // теперь это массив ВСЕХ карточек доски
     } catch (err) {
       return rejectWithValue(err);
     }
   },
 );
 
-// удалить карточку
 export const deleteCard = createAsyncThunk(
   "cards/deleteCard",
   async (cardId, { rejectWithValue }) => {
@@ -56,7 +67,6 @@ export const deleteCard = createAsyncThunk(
   },
 );
 
-// обновить карточку
 export const updateCard = createAsyncThunk(
   "cards/updateCard",
   async ({ cardId, data }, { rejectWithValue }) => {
@@ -69,13 +79,11 @@ export const updateCard = createAsyncThunk(
   },
 );
 
-//добавить изображение
 export const uploadImages = createAsyncThunk(
   "cards/uploadImages",
   async ({ cardId, files }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-
       files.forEach((file) => {
         formData.append("files", file);
       });
@@ -91,7 +99,6 @@ export const uploadImages = createAsyncThunk(
   },
 );
 
-//удалить изображение
 export const deleteImage = createAsyncThunk(
   "cards/deleteImage",
   async (imageId, { rejectWithValue }) => {
@@ -116,7 +123,7 @@ const cardsSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
-    //меняем стейт до ответа сервера
+    //  локально двигаем карточку
     moveCardOptimistic(state, action) {
       const { cardId, newColumn, newPosition } = action.payload;
 
@@ -166,7 +173,21 @@ const cardsSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-      //fetch
+      // fetchBoardCards
+      .addCase(fetchBoardCards.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchBoardCards.fulfilled, (state, action) => {
+        state.loading = false;
+        //  заменяем массив
+        state.cards = action.payload;
+      })
+      .addCase(fetchBoardCards.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Ошибка загрузки карточек";
+      })
+      // fetchCards
       .addCase(fetchCards.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -182,7 +203,7 @@ const cardsSlice = createSlice({
         state.loading = false;
         state.error = "Ошибка загрузки карточек";
       })
-      //create
+      // create
       .addCase(createCard.pending, (state) => {
         state.loading = true;
         state.actionType = "create";
@@ -201,7 +222,7 @@ const cardsSlice = createSlice({
           action.payload ||
           "Ошибка создания карточки";
       })
-      //delete
+      // delete
       .addCase(deleteCard.pending, (state) => {
         state.loading = true;
         state.actionType = "delete";
@@ -220,7 +241,7 @@ const cardsSlice = createSlice({
           action.payload ||
           "Ошибка удаления карточки";
       })
-      //update
+      // update
       .addCase(updateCard.pending, (state) => {
         state.loading = true;
         state.actionType = "update";
@@ -240,7 +261,7 @@ const cardsSlice = createSlice({
         state.error =
           action.payload?.message || action.payload || "Ошибка обновления";
       })
-      //upload
+      // upload
       .addCase(uploadImages.pending, (state) => {
         state.loading = true;
         state.actionType = "upload";
@@ -262,7 +283,7 @@ const cardsSlice = createSlice({
           action.payload ||
           "Ошибка загрузки изображений";
       })
-      //deleteImage
+      // deleteImage
       .addCase(deleteImage.pending, (state) => {
         state.loading = true;
         state.actionType = "deleteImage";
@@ -271,7 +292,6 @@ const cardsSlice = createSlice({
       .addCase(deleteImage.fulfilled, (state, action) => {
         state.loading = false;
         state.actionType = null;
-        // Находим карточку и удаляем картинку из её массива
         const card = state.cards.find((c) =>
           c.images?.some((img) => img.id === action.payload),
         );
@@ -287,7 +307,7 @@ const cardsSlice = createSlice({
           action.payload ||
           "Ошибка удаления изображения";
       })
-      //обновляем карточки после перемещения
+      // moveCard
       .addCase(moveCard.pending, (state) => {
         state.loading = true;
         state.actionType = "moveCard";
@@ -296,8 +316,7 @@ const cardsSlice = createSlice({
       .addCase(moveCard.fulfilled, (state, action) => {
         state.loading = false;
         state.actionType = null;
-        const index = state.cards.findIndex((c) => c.id === action.payload.id);
-        if (index !== -1) state.cards[index] = action.payload;
+        state.cards = action.payload;
       })
       .addCase(moveCard.rejected, (state, action) => {
         state.loading = false;

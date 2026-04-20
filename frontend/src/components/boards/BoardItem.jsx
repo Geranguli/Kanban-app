@@ -54,7 +54,6 @@ function BoardItem({ board, accentClass }) {
     >
       <div className={`board-card-accent ${accentClass}`} />
       <div className="board-card-body">
-        {error && <div className="error-inline mb-8">{error}</div>}
         {editing ? (
           <>
             <input
@@ -68,30 +67,33 @@ function BoardItem({ board, accentClass }) {
               disabled={loading}
             />
 
-            <button
-              onClick={handleUpdate}
-              disabled={loading}
-              className="board-card-btn"
-            >
-              {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  <span className="loading-text">Сохранение...</span>
-                </>
-              ) : (
-                "Сохранить"
-              )}
-            </button>
+            <div className="board-card-actions">
+              <button
+                onClick={handleUpdate}
+                disabled={loading}
+                className="board-card-btn"
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    <span className="loading-text">Сохранение...</span>
+                  </>
+                ) : (
+                  "Сохранить"
+                )}
+              </button>
 
-            <button
-              onClick={(e) => {
-                setEditing(false);
-                e.stopPropagation();
-              }}
-              className="board-card-btn board-card-btn-del"
-            >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
+              <button
+                onClick={(e) => {
+                  setEditing(false);
+                  e.stopPropagation();
+                }}
+                disabled={loading}
+                className="board-card-btn board-card-btn-del"
+              >
+                Закрыть
+              </button>
+            </div>
           </>
         ) : (
           <>
@@ -100,6 +102,7 @@ function BoardItem({ board, accentClass }) {
             <div className="board-card-actions">
               <button
                 onClick={(e) => {
+                  setTitle(board.title);
                   setEditing(true);
                   e.stopPropagation();
                 }}

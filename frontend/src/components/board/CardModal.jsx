@@ -17,9 +17,9 @@ function CardModal({ card, onClose }) {
     description: "",
     due_date: "",
   });
-  const [newImages, setNewImages] = useState([]);
   const [localImages, setLocalImages] = useState([]);
   const [localError, setLocalError] = useState(null);
+  const [lightboxImg, setLightboxImg] = useState(null);
 
   // заполняем форму данными карточки при открытии
   useEffect(() => {
@@ -30,9 +30,7 @@ function CardModal({ card, onClose }) {
         due_date: card.due_date || "",
       });
       setLocalImages(card.images || []);
-      setNewImages([]);
       setLocalError(null);
-
       dispatch(clearError());
     }
   }, [card, dispatch]);
@@ -58,22 +56,34 @@ function CardModal({ card, onClose }) {
         }),
       ).unwrap();
 
-      // если есть новые картинки — загружаем
-      if (newImages.length > 0) {
-        await dispatch(
-          uploadImages({
-            cardId: card.id,
-            files: newImages,
-          }),
-        ).unwrap();
-      }
-
       handleClose();
     } catch (err) {
       setLocalError(err || "Ошибка сохранения");
     }
   };
-  const handleDeleteImage = async (id) => {
+
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setLocalError(null);
+
+    try {
+      const updatedCard = await dispatch(
+        uploadImages({
+          cardId: card.id,
+          files,
+        }),
+      ).unwrap();
+      setLocalImages(updatedCard.images || []);
+      e.target.value = "";
+    } catch (err) {
+      setLocalError("Ошибка загрузки");
+    }
+  };
+
+  const handleDeleteImage = async (e, id) => {
+    e.stopPropagation();
     const prev = [...localImages];
 
     setLocalImages((imgs) => imgs.filter((i) => i.id !== id)); // сразу удаляем
@@ -84,121 +94,168 @@ function CardModal({ card, onClose }) {
       setLocalError("Ошибка удаления");
     }
   };
+
+  // Скачать картинку
+  const handleDownload = async () => {
+    if (!lightboxImg) return;
+    try {
+      const response = await fetch(lightboxImg.src);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = lightboxImg.url.split("/").pop();
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      setLocalError("Ошибка скачивания");
+    }
+  };
+
   // не рендерим модалку если карточка не выбрана
   if (!card) return null;
 
   return (
     // клик по фону закрывает модалку
-    <div onClick={onClose} className="modal-overlay">
+    <div className="modal-overlay" onClick={handleClose}>
       {/* клик внутри окна не закрывает его */}
-      <div onClick={(e) => e.stopPropagation()} className="modal">
-        <h3>Edit card</h3>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={handleClose}>
+          <i className="fa-solid fa-xmark"></i>
+        </button>
 
         {/* Показываем ошибку */}
         {(localError || error) && (
-          <div className="error-box mb-10">{localError || error}</div>
+          <div className="error-box mt-20">{localError || error}</div>
         )}
+        <div className="modal-fields">
+          <div className="modal-field">
+            <input
+              className="input"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              placeholder="Название"
+              disabled={loading}
+            />
 
-        <input
-          className="input"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder="Title"
-          disabled={loading}
-        />
+            <textarea
+              className="input"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder="Описание"
+              disabled={loading}
+            />
 
-        <textarea
-          className="input"
-          value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
-          placeholder="Description"
-          disabled={loading}
-        />
-
-        <input
-          className="input"
-          type="date"
-          value={formData.due_date || ""}
-          onChange={(e) =>
-            setFormData({ ...formData, due_date: e.target.value })
-          }
-          disabled={loading}
-        />
-
-        <div>
-          <h4>Images</h4>
-
-          {localImages.length > 0 ? (
-            localImages.map((img) => (
-              <div key={img.id} className="mt-8">
-                <img src={`http://localhost:8000/${img.url}`} width="100" />
-                <button
-                  onClick={() => handleDeleteImage(img.id)}
-                  className="btn btn-danger mt-8"
-                >
-                  Delete
-                </button>
-              </div>
-            ))
-          ) : (
-            <p>No images</p>
-          )}
+            <input
+              className="input"
+              type="date"
+              value={formData.due_date || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, due_date: e.target.value })
+              }
+              disabled={loading}
+            />
+          </div>
         </div>
+        <div className="modal-field">
+          <h4 className="modal-section-title">Вложения</h4>
 
-        {/*загрузка новых изображений */}
-        <div>
-          <h4>Add images</h4>
+          {localImages.length == 0 ? (
+            <p className="modal-noImg">Нет изображений</p>
+          ) : (
+            <div className="modal-images">
+              {localImages.map((img) => (
+                <div key={img.id} className="modal-img-row">
+                  <div
+                    className="modal-img-wrap"
+                    onClick={() =>
+                      setLightboxImg({
+                        src: `http://localhost:8000/${img.url}`,
+                        url: img.url,
+                        id: img.id,
+                      })
+                    }
+                  >
+                    <img src={`http://localhost:8000/${img.url}`} alt="" />
+                  </div>
 
-          <input
-            className="input"
-            type="file"
-            multiple
-            onChange={(e) => setNewImages(Array.from(e.target.files))}
-            disabled={loading}
-          />
-
-          {newImages.length > 0 && (
-            <div style={{ marginTop: "10px" }}>
-              {newImages.map((file, index) => (
-                <img
-                  key={index}
-                  src={URL.createObjectURL(file)}
-                  alt=""
-                  style={{
-                    width: "80px",
-                    marginRight: "5px",
-                    borderRadius: "6px",
-                  }}
-                />
+                  <button
+                    className="modal-img-delete"
+                    onClick={(e) => handleDeleteImage(e, img.id)}
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
               ))}
             </div>
           )}
         </div>
 
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="btn btn-primary mt-16"
-        >
-          {loading ? (
-            <>
-              <span className="spinner"></span>
-              <span className="loading-text">Сохранение...</span>
-            </>
-          ) : (
-            "Save"
-          )}
-        </button>
-        <button
-          onClick={onClose}
-          disabled={loading}
-          className="btn btn-ghost mt-16 ml-8"
-        >
-          Cancel
-        </button>
+        <div className="modal-field">
+          <h4 className="modal-section-title">Добавить</h4>
+          <input
+            className="input"
+            type="file"
+            multiple
+            onChange={handleUpload}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="modal-footer">
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="btn btn-primary mt-16"
+          >
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                <span className="loading-text">Сохранение...</span>
+              </>
+            ) : (
+              "Сохранить"
+            )}
+          </button>
+        </div>
       </div>
+
+      {lightboxImg && (
+        <div
+          className="lightbox-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            setLightboxImg(null);
+          }}
+        >
+          <button
+            className="lightbox-close"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxImg(null);
+            }}
+          >
+            <i className="fa-solid fa-xmark"></i>
+          </button>
+          <div
+            className="lightbox-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img src={lightboxImg.src} alt="" />
+            <div className="lightbox-actions">
+              <button className="lightbox-btn" onClick={handleDownload}>
+                <i className="fa-solid fa-download"></i> Скачать
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

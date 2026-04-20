@@ -1,6 +1,7 @@
 .add-column-wrap {
     flex-shrink: 0;
-    width: 280px;
+    width: 252px;
+    align-self: flex-start;
 }
 
 .add-column-form {

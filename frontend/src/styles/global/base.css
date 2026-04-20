@@ -6,10 +6,11 @@ body {
     color: #172b4d;
     font-size: 14px;
     line-height: 1.5;
+    overflow: hidden;
 }
 
 #root {
-    min-height: 100vh;
+    height: 100vh;
 }
 
 h1,

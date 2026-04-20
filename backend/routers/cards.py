@@ -26,6 +26,17 @@ router = APIRouter(
     tags=["Cards"]
 )
 
+# все карточки доски одним запросом
+@router.get("/board/{board_id}", response_model=List[CardResponse])
+def get_board_cards(board_id: int, db: Session = Depends(get_db)):
+    stmt = (
+        select(Card)
+        .join(KanbanColumn, Card.column_id == KanbanColumn.id)
+        .where(KanbanColumn.board_id == board_id)
+        .order_by(Card.column_id, Card.position)
+    )
+    return db.scalars(stmt).all()
+
 @router.post("/", response_model=CardResponse)
 def create_card(card: CardCreate, column_id: int, db: Session = Depends(get_db)):
     stmt = select(KanbanColumn).where(KanbanColumn.id == column_id)
@@ -57,6 +68,7 @@ def get_card(card_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Карточка не найдена")
     return db_card
 
+# Оставляем для обратной совместимости, но фронт больше не использует
 @router.get("/", response_model=List[CardResponse])
 def get_cards(column_id: int, db: Session = Depends(get_db)):
     stmt = select(Card).where(Card.column_id == column_id)
@@ -107,9 +119,8 @@ def delete_cards(column_id: int, db: Session = Depends(get_db)):
         "message": f"Удалено карточек: {result.rowcount}",
         "column_id": column_id
     }
-
-# эндпоинт для drag-and-drop
-@router.patch("/{card_id}/move", response_model=CardResponse)
+# move - возвращает все карточки доски для стабильности
+@router.patch("/{card_id}/move", response_model=List[CardResponse])
 def move_card(card_id: int, move: CardMove, db: Session = Depends(get_db)):
     db_card = db.scalar(select(Card).where(Card.id == card_id))
     if not db_card:
@@ -124,20 +135,22 @@ def move_card(card_id: int, move: CardMove, db: Session = Depends(get_db)):
     if not column:
         raise HTTPException(status_code=404, detail="Столбец не найден")
 
+    # Получаем board_id для возврата всех карточек
+    board_id = column.board_id
+
     cards_in_new_column = db.scalars(
         select(Card)
         .where(Card.column_id == new_column_id)
         .order_by(Card.position)
     ).all()
 
-    # ограничиваем позицию допустимым диапазоном
+    # Ограничиваем позицию
     if new_position < 0:
         new_position = 0
     if new_position > len(cards_in_new_column):
         new_position = len(cards_in_new_column)
 
     if old_column_id == new_column_id:
-        # перемещение в той же колонке - сдвигаем остальные карточки
         if old_position < new_position:
             for card in cards_in_new_column:
                 if old_position < card.position <= new_position:
@@ -147,8 +160,7 @@ def move_card(card_id: int, move: CardMove, db: Session = Depends(get_db)):
                 if new_position <= card.position < old_position:
                     card.position += 1
     else:
-        # перемещение в другую колонку
-        # уменьшаем позиции в старой колонке
+        # Старая колонка — уменьшаем позиции
         old_cards = db.scalars(
             select(Card).where(Card.column_id == old_column_id)
         ).all()
@@ -156,7 +168,7 @@ def move_card(card_id: int, move: CardMove, db: Session = Depends(get_db)):
             if card.position > old_position:
                 card.position -= 1
 
-        # увеличиваем позиции в новой колонке
+        # Новая колонка — увеличиваем позиции
         for card in cards_in_new_column:
             if card.position >= new_position:
                 card.position += 1
@@ -165,10 +177,15 @@ def move_card(card_id: int, move: CardMove, db: Session = Depends(get_db)):
 
     db_card.position = new_position
     db.commit()
-    db.refresh(db_card)
-    return db_card
 
-from models import CardImage
+    #  Возвращаем все карточки доски 
+    stmt = (
+        select(Card)
+        .join(KanbanColumn, Card.column_id == KanbanColumn.id)
+        .where(KanbanColumn.board_id == board_id)
+        .order_by(Card.column_id, Card.position)
+    )
+    return db.scalars(stmt).all()
 
 @router.post("/{card_id}/images", response_model=CardResponse)
 def upload_images(
@@ -181,7 +198,7 @@ def upload_images(
         raise HTTPException(status_code=404, detail="Карточка не найдена")
 
     for file in files:
-        filename = f"{uuid.uuid4()}_{file.filename}"  # уникальное имя
+        filename = f"{uuid.uuid4()}_{file.filename}"
         filepath = os.path.join(UPLOAD_DIR, filename)
 
         with open(filepath, "wb") as buffer:
@@ -201,7 +218,6 @@ def delete_image(image_id: int, db: Session = Depends(get_db)):
     if not image:
         raise HTTPException(status_code=404, detail="Изображение не найдено")
 
-    # удалить файл с диска
     if os.path.exists(image.url):
         os.remove(image.url)
 

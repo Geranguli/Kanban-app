@@ -62,9 +62,7 @@ function Auth() {
         </button>
 
         {error && (
-          <div className="auth-hint" role="alert" style={{ color: "#d32f2f" }}>
-            {error}
-          </div>
+          <div className="error-box error-box-center mt-20">{error}</div>
         )}
       </div>
     </div>

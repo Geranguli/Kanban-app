@@ -9,6 +9,7 @@
     width: 100%;
     overflow: hidden;
     cursor: grab;
+    transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
 .card:active {
@@ -17,6 +18,7 @@
 
 .card.dragging {
     opacity: 0.5;
+    z-index: 999;
     border: 1.5px dashed #7F77DD;
     background: #EEEDFE;
 }
@@ -141,4 +143,12 @@
     width: 252px;
     opacity: 0.5;
     transform: rotate(2deg);
+}
+
+.card--dragging {
+    min-height: 52px;
+    background: #e0e4f0;
+    border: 2px dashed #7F77DD;
+    border-radius: 8px;
+    opacity: 1;
 }

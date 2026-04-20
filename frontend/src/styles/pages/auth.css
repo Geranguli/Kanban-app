@@ -70,7 +70,7 @@
     cursor: not-allowed;
 }
 
-.auth-hint {
+.auth-error {
     font-size: 12px;
     color: #626f86;
     text-align: center;

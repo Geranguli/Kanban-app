@@ -3,12 +3,16 @@
     border: 1px solid #f09595;
     border-radius: 8px;
     padding: 10px 14px;
-    font-size: 13px;
+    font-size: 14px;
     color: #A32D2D;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
+}
+.error-box-center{
+    align-items: center;
+    justify-content: center;
 }
 
 .error-inline {
