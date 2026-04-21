@@ -16,9 +16,9 @@ import { logout } from "../store/userSlice";
 
 import {
   DndContext,
-  pointerWithin,
   DragOverlay,
-  closestCenter,
+  defaultDropAnimationSideEffects,
+  closestCorners,
 } from "@dnd-kit/core";
 
 function Board() {
@@ -26,12 +26,10 @@ function Board() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const {
-    columns,
-    loading: columnsLoading,
-    error: columnsError,
-  } = useSelector((state) => state.columns);
-  const { cards, loading: cardsLoading } = useSelector((state) => state.cards);
+  const { columns, loading: columnsLoading } = useSelector(
+    (state) => state.columns,
+  );
+  const { cards } = useSelector((state) => state.cards);
   const { boards } = useSelector((state) => state.boards);
   const { user } = useSelector((state) => state.user);
 
@@ -41,31 +39,28 @@ function Board() {
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [editingCard, setEditingCard] = useState(null);
   const [activeCard, setActiveCard] = useState(null);
+  const [columnError, setColumnError] = useState(null);
 
   const cardsByColumn = useMemo(() => {
     const map = {};
 
-    // Инициализируем все колонки пустыми массивами
     columns.forEach((col) => {
       map[col.id] = [];
     });
 
-    // Распределяем карточки
     cards.forEach((card) => {
       if (map[card.column_id] !== undefined) {
         map[card.column_id].push(card);
       }
     });
 
-    // Сортируем внутри каждой колонки
     Object.values(map).forEach((arr) => {
       arr.sort((a, b) => a.position - b.position);
     });
 
     return map;
-  }, [cards, columns]); // columns добавлен для инициализации пустых массивов
+  }, [cards, columns]);
 
-  // 1 запрос на загрузку колонок
   const loadColumns = useCallback(() => {
     if (id) {
       dispatch(fetchColumns(id));
@@ -76,14 +71,12 @@ function Board() {
     loadColumns();
   }, [loadColumns]);
 
-  // 1 запрос на все карточки доски
   useEffect(() => {
     if (id) {
       dispatch(fetchBoardCards(id));
     }
   }, [dispatch, id]);
 
-  // Доски подгружаются после перезагрузки
   useEffect(() => {
     if (user && boards.length === 0) {
       dispatch(fetchBoards(user.id));
@@ -92,16 +85,23 @@ function Board() {
 
   const handleCreateColumn = async () => {
     if (!newColumnTitle.trim()) return;
-    await dispatch(
-      createColumn({ boardId: id, title: newColumnTitle }),
-    ).unwrap();
-    setNewColumnTitle("");
-    setShowAddColumn(false);
+
+    setColumnError(null);
+    try {
+      await dispatch(
+        createColumn({ boardId: id, title: newColumnTitle }),
+      ).unwrap();
+      setNewColumnTitle("");
+      setShowAddColumn(false);
+    } catch (err) {
+      setColumnError(err?.message || "Ошибка создания колонки");
+    }
   };
 
   const handleCancelAddColumn = () => {
     setNewColumnTitle("");
     setShowAddColumn(false);
+    setColumnError(null);
   };
 
   const handleLogout = () => {
@@ -127,55 +127,88 @@ function Board() {
     const activeCard = cards.find((c) => c.id === active.id);
     if (!activeCard) return;
 
-    // Определяем целевую колонку
-    const overCard = cards.find((c) => c.id === over.id);
+    const overId = over.id;
     const overData = over.data?.current;
 
     let newColumnId;
-    let isOverColumn = false;
-
-    if (overCard) {
-      newColumnId = overCard.column_id;
-    } else if (overData?.type === "column") {
-      newColumnId = overData.columnId;
-      isOverColumn = true;
-    } else return;
-
-    // Позиция в целевой колонке
-    const cardsInColumn = cards
-      .filter((c) => c.column_id === newColumnId)
-      .sort((a, b) => a.position - b.position);
     let newPosition;
 
-    if (isOverColumn) {
-      // Бросили прямо на колонку — в конец
-      newPosition = cardsInColumn.length;
-    } else if (overCard) {
-      // определяем, перед или после карточки
-      const overIndex = cardsInColumn.findIndex((c) => c.id === over.id);
+    // Определяем, бросили на колонку/пустую зону или на карточку
+    if (overData?.type === "column" || overData?.type === "empty-zone") {
+      // Бросили на колонку или пустую зону внутри колонки
+      newColumnId = overData.columnId;
 
-      // Получаем координаты для сравнения
+      // Получаем карточки целевой колонки (уже отсортированные)
+      const cardsInColumn = cards
+        .filter((c) => c.column_id === newColumnId)
+        .sort((a, b) => a.position - b.position);
+
+      // Если колонка пустая — позиция 0, иначе в конец
+      newPosition = cardsInColumn.length;
+    } else {
+      // Бросили на карточку
+      const overCard = cards.find((c) => c.id === overId);
+      if (!overCard) return;
+
+      newColumnId = overCard.column_id;
+
+      const cardsInColumn = cards
+        .filter((c) => c.column_id === newColumnId)
+        .sort((a, b) => a.position - b.position);
+
+      const overIndex = cardsInColumn.findIndex((c) => c.id === overId);
+
+      // Определяем, перед или после карточки, по положению указателя/центра
       const activeRect = active.rect.current.translated;
       const overRect = over.rect;
 
       if (!activeRect || !overRect) {
         newPosition = overIndex;
       } else {
-        // Если бросили ниже центра over-карточки — после неё
-        const isAfter = activeRect.top > overRect.top + overRect.height / 2;
+        // Если центр перетаскиваемой карточки выше центра целевой - вставляем перед
+        const activeCenterY = activeRect.top + activeRect.height / 2;
+        const overCenterY = overRect.top + overRect.height / 2;
+        const isBefore = activeCenterY < overCenterY;
 
-        newPosition = isAfter ? overIndex + 1 : overIndex;
+        // Корректировка для перемещения внутри одной колонки
+        if (activeCard.column_id === newColumnId) {
+          const activeIndex = cardsInColumn.findIndex(
+            (c) => c.id === active.id,
+          );
+
+          if (activeIndex < overIndex && isBefore) {
+            // Двигаем вверх, но уже выше целевой — остаёмся перед ней
+            newPosition = overIndex - 1;
+          } else if (activeIndex > overIndex && !isBefore) {
+            // Двигаем вниз, но уже ниже целевой — остаёмся после неё
+            newPosition = overIndex + 1;
+          } else {
+            newPosition = isBefore ? overIndex : overIndex + 1;
+          }
+        } else {
+          // Из другой колонки — просто перед или после
+          newPosition = isBefore ? overIndex : overIndex + 1;
+        }
       }
-    } else {
-      newPosition = cardsInColumn.length;
     }
 
-    // Ограничиваем
-    if (newPosition > cardsInColumn.length) {
-      newPosition = cardsInColumn.length;
+    // Ограничиваем позицию
+    const cardsInTargetColumn = cards.filter(
+      (c) => c.column_id === newColumnId,
+    );
+    if (newPosition > cardsInTargetColumn.length) {
+      newPosition = cardsInTargetColumn.length;
     }
     if (newPosition < 0) {
       newPosition = 0;
+    }
+
+    // Если ничего не изменилось — не делаем запрос
+    if (
+      activeCard.column_id === newColumnId &&
+      activeCard.position === newPosition
+    ) {
+      return;
     }
 
     // Оптимистичное обновление
@@ -200,27 +233,15 @@ function Board() {
     }
   };
 
-  if (columnsLoading && columns.length === 0) {
-    return (
-      <div className="board-page">
-        <Topbar
-          title={board?.title}
-          user={user}
-          showLogout={true}
-          onLogout={handleLogout}
-          showBackButton={true}
-          onBack={handleBack}
-        />
-        <div className="home-body">
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <span className="spinner spinner-lg"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const dropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: "0.5",
+        },
+      },
+    }),
+  };
 
   return (
     <div className="board-page">
@@ -233,101 +254,90 @@ function Board() {
         onBack={handleBack}
       />
       <div className="board-content">
-        {columnsLoading ? (
-          <div className="page-loading">
+        {columnsLoading && (
+          <div className="overlay-spinner">
             <span className="spinner spinner-lg"></span>
           </div>
-        ) : (
-          <>
-            {columnsError && (
-              <div className="error-box mb-16">
-                <div>{columnsError}</div>
-                <button onClick={loadColumns} className="btn btn-primary mt-8">
-                  Повторить
-                </button>
-              </div>
-            )}
-
-            {cardsLoading && cards.length === 0 && (
-              <div className="loading-text mb-10">Загрузка карточек...</div>
-            )}
-
-            <DndContext
-              //collisionDetection={pointerWithin}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="columns-wrap">
-                {columns.map((column) => (
-                  <ColumnItem
-                    key={column.id}
-                    column={column}
-                    cards={cardsByColumn[column.id] || []}
-                    onEditCard={setEditingCard}
-                  />
-                ))}
-                {showAddColumn ? (
-                  <div className="add-column-wrap">
-                    <div className="add-column-form">
-                      <input
-                        placeholder="Название колонки..."
-                        value={newColumnTitle}
-                        onChange={(e) => setNewColumnTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleCreateColumn();
-                        }}
-                        autoFocus
-                      />
-                      <div className="card-form-actions">
-                        <button
-                          onClick={handleCreateColumn}
-                          disabled={columnsLoading}
-                          className="btn btn-primary"
-                        >
-                          {columnsLoading ? (
-                            <>
-                              <span className="spinner"></span>
-                              <span className="loading-text">Создание...</span>
-                            </>
-                          ) : (
-                            "Добавить"
-                          )}
-                        </button>
-                        <button
-                          onClick={handleCancelAddColumn}
-                          className="btn btn-ghost"
-                        >
-                          Отмена
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowAddColumn(true)}
-                    className="add-column-trigger"
-                  >
-                    + Добавить колонку
-                  </button>
-                )}
-              </div>
-
-              <DragOverlay>
-                {activeCard ? (
-                  <div className="card-preview">
-                    <CardItem card={activeCard} onEdit={() => {}} />
-                  </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-
-            <CardModal
-              card={editingCard}
-              onClose={() => setEditingCard(null)}
-            />
-          </>
         )}
+
+        <DndContext
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="columns-wrap">
+            {columns.map((column) => (
+              <ColumnItem
+                key={column.id}
+                column={column}
+                cards={cardsByColumn[column.id] || []}
+                onEditCard={setEditingCard}
+              />
+            ))}
+            {showAddColumn ? (
+              <div className="add-column-wrap">
+                <div className="add-column-form">
+                  <input
+                    placeholder="Название колонки..."
+                    value={newColumnTitle}
+                    onChange={(e) => setNewColumnTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreateColumn();
+                    }}
+                    autoFocus
+                  />
+
+                  {columnError && (
+                    <div className="error-box mt-8">
+                      <p>{columnError}</p>
+                    </div>
+                  )}
+                  <div className="card-form-actions">
+                    <button
+                      onClick={handleCreateColumn}
+                      disabled={columnsLoading}
+                      className="btn btn-primary"
+                    >
+                      {columnsLoading ? (
+                        <>
+                          <span className="spinner"></span>
+                          <span className="loading-text">Создание...</span>
+                        </>
+                      ) : (
+                        "Добавить"
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        if (!columnsLoading) handleCancelAddColumn();
+                      }}
+                      className="btn btn-ghost"
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddColumn(true)}
+                className="add-column-trigger"
+              >
+                + Добавить колонку
+              </button>
+            )}
+          </div>
+
+          <DragOverlay dropAnimation={dropAnimation}>
+            {activeCard ? (
+              <div className="card-preview">
+                <CardItem card={activeCard} onEdit={() => {}} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+        <CardModal card={editingCard} onClose={() => setEditingCard(null)} />
       </div>
     </div>
   );

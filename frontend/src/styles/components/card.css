@@ -82,13 +82,11 @@
     gap: 4px;
     font-size: 13px;
     color: #454e5d;
-    margin-bottom: 8px;
 }
 
 .card-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
     margin-top: 4px;
 }
@@ -151,4 +149,33 @@
     border: 2px dashed #7F77DD;
     border-radius: 8px;
     opacity: 1;
+}
+
+.card-actions {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s, visibility 0.15s;
+    flex-shrink: 0;
+}
+
+.card:hover .card-actions {
+    opacity: 1;
+    visibility: visible;
+}
+.card-actions .spinner-sm {
+    opacity: 1;
+    visibility: visible;
+}
+.card-actions--no-images {
+    margin-left: auto;
+}
+
+.card-images-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
 }

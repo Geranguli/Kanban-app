@@ -131,7 +131,6 @@ function Home() {
           )}
         </div>
 
-        {/*{filteredBoards.length > 0 ? (*/}
         <div className="boards-grid">
           {filteredBoards.map((board, idx) => (
             <BoardItem
@@ -154,9 +153,6 @@ function Home() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleCreateBoard();
-                      {
-                        /*setIsCreating(false);*/
-                      }
                     }
                     if (e.key === "Escape") {
                       setIsCreating(false);
@@ -193,7 +189,7 @@ function Home() {
                     disabled={actionLoading && actionType === "create"}
                     className="board-card-btn board-card-btn-del"
                   >
-                    Закрыть
+                    Отмена
                   </button>
                 </div>
               </div>

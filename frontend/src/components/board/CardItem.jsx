@@ -21,6 +21,7 @@ function CardItem({ card, onEdit }) {
     id: card.id,
     data: {
       type: "card",
+      columnId: card.column_id, // Для определения исходной колонки
     },
   });
 
@@ -58,6 +59,7 @@ function CardItem({ card, onEdit }) {
   const handleImgDragStart = (e) => {
     e.preventDefault();
   };
+
   return (
     <div
       ref={setNodeRef}
@@ -78,7 +80,6 @@ function CardItem({ card, onEdit }) {
         </div>
       )}
 
-      {/* область для перетаскивания */}
       <div className="card-body">
         <div className="card-header">
           <div className="card-title">{card.title || "Без названия"}</div>
@@ -88,25 +89,18 @@ function CardItem({ card, onEdit }) {
           <div className="card-desc">{card.description}</div>
         )}
 
-        {images.length > 0 && (
-          <div className="card-images-count">
-            <i className="fa-regular fa-image"></i>
-            {images.length}
-          </div>
-        )}
-
-        <div className="card-footer">
-          {card.due_date && (
-            <span className={`card-due ${isOverdue ? "overdue" : "ok"}`}>
-              {card.due_date}
-            </span>
+        <div className="card-images-row">
+          {images.length > 0 && (
+            <div className="card-images-count">
+              <i className="fa-regular fa-image"></i>
+              {images.length}
+            </div>
           )}
-
-          <div className="card-btns">
+          <div className="card-actions">
             <button
               onClick={handleEdit}
               disabled={isLoading}
-              className="card-btn"
+              className="card-btn card-btn-edit"
               onMouseDown={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
@@ -120,7 +114,7 @@ function CardItem({ card, onEdit }) {
               onPointerDown={(e) => e.stopPropagation()}
             >
               {isLoading ? (
-                <span className="loading-text">Удаление...</span>
+                <span className="spinner-sm"></span>
               ) : (
                 <i className="fa-solid fa-xmark"></i>
               )}
@@ -128,6 +122,13 @@ function CardItem({ card, onEdit }) {
           </div>
         </div>
 
+        <div className="card-footer">
+          {card.due_date && (
+            <span className={`card-due ${isOverdue ? "overdue" : "ok"}`}>
+              {card.due_date}
+            </span>
+          )}
+        </div>
         {error && <div className="error-inline mt-8">{error}</div>}
       </div>
     </div>

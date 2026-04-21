@@ -50,7 +50,7 @@
     border: 1px solid #c1c7d0;
     border-radius: 8px;
     padding: 7px 12px 7px 32px;
-    font-size: 13px;
+    font-size: 14px;
     color: #172b4d;
     outline: none;
     transition: border-color 0.15s;
@@ -79,8 +79,6 @@
 }
 
 .empty-state-icon {
-    /*font-size: 36px;
-    margin-bottom: 12px;*/
     font-size: 36px;
     display: flex;
     justify-content: center;

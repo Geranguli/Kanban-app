@@ -91,7 +91,7 @@ function BoardItem({ board, accentClass }) {
                 disabled={loading}
                 className="board-card-btn board-card-btn-del"
               >
-                Закрыть
+                Отмена
               </button>
             </div>
           </>

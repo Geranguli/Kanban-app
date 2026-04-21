@@ -78,7 +78,7 @@ function CardModal({ card, onClose }) {
       setLocalImages(updatedCard.images || []);
       e.target.value = "";
     } catch (err) {
-      setLocalError("Ошибка загрузки");
+      setLocalError(err || "Ошибка загрузки");
     }
   };
 
@@ -119,10 +119,19 @@ function CardModal({ card, onClose }) {
 
   return (
     // клик по фону закрывает модалку
-    <div className="modal-overlay" onClick={handleClose}>
+    <div
+      className="modal-overlay"
+      onClick={() => {
+        if (!loading) handleClose();
+      }}
+    >
       {/* клик внутри окна не закрывает его */}
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={handleClose}>
+        <button
+          className="modal-close"
+          onClick={handleClose}
+          disabled={loading}
+        >
           <i className="fa-solid fa-xmark"></i>
         </button>
 

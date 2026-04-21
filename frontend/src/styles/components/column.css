@@ -1,12 +1,18 @@
 .column {
-background: #ebecf0;
-    border-radius: 10px;
-    width: 252px;
+background: #f4f5f7;
+    background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+    background-size: 20px 20px;
+    border-radius: 12px;
+    width: 260px;
     flex-shrink: 0;
     display: flex;
         flex-direction: column;
-    max-height: calc(90vh - 80px);
+    max-height: calc(100vh - 80px);
         height: auto;
+
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(0, 0, 0, 0.04);
+            border: 1px solid #d1d5db;
 }
 
 .column.drag-over {
@@ -23,7 +29,8 @@ background: #ebecf0;
     align-items: flex-start;
     justify-content: space-between;
     margin-bottom: 10px;
-    padding: 2px 2px 0;
+    padding: 14px 14px 0;
+    
 }
 
 .column-title {
@@ -36,6 +43,25 @@ background: #ebecf0;
     word-break: break-word;
         overflow-wrap: anywhere;
         white-space: normal;
+        display: flex;
+        align-items: center; 
+        gap: 6px;
+
+        cursor: pointer;
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: -2px -4px;
+            transition: background 0.15s;
+            flex: 1;
+}
+
+.column-title:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.column-action-btn--delete:hover {
+    background: #FCEBEB !important;
+    color: #A32D2D !important;
 }
 
 .column-count {
@@ -81,6 +107,7 @@ background: #ebecf0;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 4px;
+
 }
 
 .column-body::-webkit-scrollbar {
@@ -91,3 +118,35 @@ background: #ebecf0;
     background: #c1c7d0;
     border-radius: 6px;
 }
+
+.column-empty-zone {
+    min-height: 20px;
+    margin-top: 8px;
+    border-radius: 6px;
+    border: 2px dashed transparent;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.column-empty-zone.visible {
+    min-height: 80px;
+    margin-top: 0;
+    border-color: #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.column-empty-zone.drag-over,
+.column.drag-over .column-empty-zone.visible {
+    border-color: #4f46e5;
+    background-color: rgba(79, 70, 229, 0.08);
+}
+.column-edit-actions {
+    display: flex;
+    gap: 6px;
+    padding: 0 14px;
+}
+

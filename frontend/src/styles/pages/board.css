@@ -30,6 +30,16 @@ flex: 1;
   align-items: stretch;
 
   padding: 16px;
+  position: relative;
+}
+.overlay-spinner {
+  position: absolute;
+  inset: 0;
+  background: rgba(244, 245, 247, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
 .columns-wrap {
