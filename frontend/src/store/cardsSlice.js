@@ -1,3 +1,14 @@
+/**
+ * Redux Slice для управления карточками
+ *
+ * Особенности:
+ * - Все карточки в плоском массиве,
+ *   группировка по column_id происходит в компонентах
+ * - Перемещение (moveCardOptimistic): мгновенно обновляет
+ *   стейт, затем синхронизирует с сервером
+ * - moveCard возвращает все карточки доски - полная перезапись стейта
+ */
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
 
@@ -8,19 +19,6 @@ export const fetchBoardCards = createAsyncThunk(
     try {
       const res = await api.get(`/cards/board/${boardId}`);
       return res.data;
-    } catch (err) {
-      return rejectWithValue(err);
-    }
-  },
-);
-
-// Оставляем для создания/редактирования в модалке
-export const fetchCards = createAsyncThunk(
-  "cards/fetchCards",
-  async (columnId, { rejectWithValue }) => {
-    try {
-      const res = await api.get(`/cards/?column_id=${columnId}`);
-      return { columnId, cards: res.data };
     } catch (err) {
       return rejectWithValue(err);
     }
@@ -48,7 +46,7 @@ export const moveCard = createAsyncThunk(
         new_column: newColumn,
         new_position: newPosition,
       });
-      return res.data; // теперь это массив ВСЕХ карточек доски
+      return res.data; // теперь это массив всех карточек доски
     } catch (err) {
       return rejectWithValue(err);
     }
@@ -123,6 +121,14 @@ const cardsSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    /**
+     * Алгоритм:
+     * 1. Удаляем карточку из старой позиции
+     * 2. Находим индекс вставки в новой колонке
+     * 3. Вставляем и пересчитываем position для всех карточек
+     * (группировка по column_id + индекс в массиве)
+     */
+
     //  локально двигаем карточку
     moveCardOptimistic(state, action) {
       const { cardId, newColumn, newPosition } = action.payload;
@@ -186,22 +192,6 @@ const cardsSlice = createSlice({
       .addCase(fetchBoardCards.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Ошибка загрузки карточек";
-      })
-      // fetchCards
-      .addCase(fetchCards.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchCards.fulfilled, (state, action) => {
-        state.loading = false;
-        state.cards = state.cards.filter(
-          (c) => c.column_id !== action.payload.columnId,
-        );
-        state.cards.push(...action.payload.cards);
-      })
-      .addCase(fetchCards.rejected, (state) => {
-        state.loading = false;
-        state.error = "Ошибка загрузки карточек";
       })
       // create
       .addCase(createCard.pending, (state) => {

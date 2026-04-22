@@ -48,13 +48,6 @@
     margin-bottom: 4px;
 }
 
-.card-drag-handle {
-    color: #8993a4;
-    font-size: 14px;
-    flex-shrink: 0;
-    line-height: 1.4;
-}
-
 .card-title {
     font-size: 15px;
     font-weight: 500;
@@ -110,12 +103,6 @@
     color: #A32D2D;
 }
 
-.card-btns {
-    display: flex;
-    gap: 6px;
-    margin-left: auto;
-}
-
 .card-btn {
     padding: 4px 9px;
     font-size: 13px;
@@ -143,14 +130,6 @@
     transform: rotate(2deg);
 }
 
-.card--dragging {
-    min-height: 52px;
-    background: #e0e4f0;
-    border: 2px dashed #7F77DD;
-    border-radius: 8px;
-    opacity: 1;
-}
-
 .card-actions {
     display: flex;
     gap: 2px;
@@ -169,10 +148,6 @@
     opacity: 1;
     visibility: visible;
 }
-.card-actions--no-images {
-    margin-left: auto;
-}
-
 .card-images-row {
     display: flex;
     align-items: center;

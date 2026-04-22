@@ -1,3 +1,11 @@
+/**
+ * Точка входа React-приложения
+ *
+ * Инициализирует:
+ * - Redux Provider для глобального стейта
+ * - BrowserRouter для маршрутизации
+ */
+
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";

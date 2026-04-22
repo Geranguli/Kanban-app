@@ -1,3 +1,13 @@
+/**
+ * Страница авторизации
+ *
+ * Упрощенная схема: ввод username -> создание/получение пользователя
+ * Нет паролей, JWT или сессий - user сохраняется в localStorage
+ * и передается через query-параметр в последующих запросах
+ *
+ * После успешного входа редирект на главную страницу (/)
+ */
+
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -12,12 +22,11 @@ function Auth() {
 
   const handleLogin = async () => {
     const trimmed = username.trim();
-    if (!trimmed) return;
+    if (!trimmed) return; // пустой ввод не отправляем
 
     try {
       await dispatch(loginUser(trimmed)).unwrap();
-      // Редирект после успешного входа
-      navigate("/");
+      navigate("/"); //навигация после успеха
     } catch (err) {
       console.error("Ошибка логина:", err);
     }

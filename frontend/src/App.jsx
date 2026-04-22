@@ -1,3 +1,12 @@
+/**
+ * Корневой компонент приложения с маршрутизацией
+ *
+ * Маршруты:
+ * - /login - страница авторизации
+ * - / - главная страница со списком досок
+ * - /boards/:id - страница конкретной доски
+ */
+
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/home";
 import Auth from "./pages/auth";

@@ -69,11 +69,3 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
-
-.auth-error {
-    font-size: 12px;
-    color: #626f86;
-    text-align: center;
-    margin-top: 16px;
-    line-height: 1.6;
-}

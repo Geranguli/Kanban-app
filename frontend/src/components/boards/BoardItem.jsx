@@ -1,5 +1,14 @@
+/**
+ * Карточка доски на главной странице
+ *
+ * Поддерживает:
+ * - Переход на доску по клику
+ * - Inline-редактирование названия
+ * - Удаление с подтверждением через window.confirm
+ */
+
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { deleteBoard, updateBoard } from "../../store/boardsSlice";
 
@@ -7,17 +16,17 @@ function BoardItem({ board, accentClass }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { actionLoading, actionType } = useSelector((state) => state.boards);
-
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(board.title);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleUpdate = async () => {
-    if (!title.trim()) return;
+    if (!title.trim()) return; // Предотвращаем сохранение пустого имени
+
     setIsLoading(true);
     setError(null);
+
     try {
       await dispatch(updateBoard({ boardId: board.id, title })).unwrap();
       setEditing(false);
@@ -34,6 +43,7 @@ function BoardItem({ board, accentClass }) {
 
     setIsLoading(true);
     setError(null);
+
     try {
       await dispatch(deleteBoard(board.id)).unwrap();
     } catch (err) {
@@ -43,14 +53,10 @@ function BoardItem({ board, accentClass }) {
     }
   };
 
-  const loading =
-    isLoading ||
-    (actionLoading && (actionType === "delete" || actionType === "update"));
-
   return (
     <div
       className="board-card"
-      onClick={() => !loading && !editing && navigate(`/boards/${board.id}`)}
+      onClick={() => !isLoading && !editing && navigate(`/boards/${board.id}`)}
     >
       <div className={`board-card-accent ${accentClass}`} />
       <div className="board-card-body">
@@ -64,16 +70,16 @@ function BoardItem({ board, accentClass }) {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleUpdate();
               }}
-              disabled={loading}
+              disabled={isLoading}
             />
 
             <div className="board-card-actions">
               <button
                 onClick={handleUpdate}
-                disabled={loading}
+                disabled={isLoading}
                 className="board-card-btn"
               >
-                {loading ? (
+                {isLoading ? (
                   <>
                     <span className="spinner"></span>
                     <span className="loading-text">Сохранение...</span>
@@ -88,7 +94,7 @@ function BoardItem({ board, accentClass }) {
                   setEditing(false);
                   e.stopPropagation();
                 }}
-                disabled={loading}
+                disabled={isLoading}
                 className="board-card-btn board-card-btn-del"
               >
                 Отмена
@@ -106,7 +112,7 @@ function BoardItem({ board, accentClass }) {
                   setEditing(true);
                   e.stopPropagation();
                 }}
-                disabled={loading}
+                disabled={isLoading}
                 className="board-card-btn board-card-btn-lg"
               >
                 Изменить
@@ -117,7 +123,7 @@ function BoardItem({ board, accentClass }) {
                   e.stopPropagation();
                   handleDelete();
                 }}
-                disabled={loading}
+                disabled={isLoading}
                 className="board-card-btn board-card-btn-del board-card-btn-lg"
               >
                 Удалить

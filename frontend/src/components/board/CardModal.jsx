@@ -1,3 +1,15 @@
+/**
+ * Модальное окно редактирования карточки
+ *
+ * Поддерживает:
+ * - Редактирование title, description, due_date
+ * - Загрузку/удаление изображений
+ * - Просмотра изображений в полном размере
+ * - Скачивание изображений через Blob-URL
+ *
+ * formData отделен от Redux до нажатия "Сохранить"
+ */
+
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -10,8 +22,10 @@ import {
 function CardModal({ card, onClose }) {
   const dispatch = useDispatch();
 
+  // Глобальные состояния загрузки и ошибок из Redux
   const { loading, error } = useSelector((state) => state.cards);
 
+  // Локальный стейт формы (не синхронизируем с Redux до сохранения)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -21,7 +35,7 @@ function CardModal({ card, onClose }) {
   const [localError, setLocalError] = useState(null);
   const [lightboxImg, setLightboxImg] = useState(null);
 
-  // заполняем форму данными карточки при открытии
+  // Синхронизация с пропсом card при открытии карточки
   useEffect(() => {
     if (card) {
       setFormData({
@@ -31,7 +45,7 @@ function CardModal({ card, onClose }) {
       });
       setLocalImages(card.images || []);
       setLocalError(null);
-      dispatch(clearError());
+      dispatch(clearError()); // Сбрасываем глобальную ошибку при открытии
     }
   }, [card, dispatch]);
 
@@ -44,14 +58,14 @@ function CardModal({ card, onClose }) {
   const handleSave = async () => {
     setLocalError(null);
     try {
-      // ждём завершения update
+      // Отправляем только измененные поля
       await dispatch(
         updateCard({
           cardId: card.id,
           data: {
             title: formData.title,
             description: formData.description,
-            due_date: formData.due_date || null,
+            due_date: formData.due_date || null, // Пустая строка -> null для БД
           },
         }),
       ).unwrap();
@@ -69,14 +83,16 @@ function CardModal({ card, onClose }) {
     setLocalError(null);
 
     try {
+      // uploadImages возвращает обновленную карточку с новыми изображениями
       const updatedCard = await dispatch(
         uploadImages({
           cardId: card.id,
           files,
         }),
       ).unwrap();
+
       setLocalImages(updatedCard.images || []);
-      e.target.value = "";
+      e.target.value = ""; // сброс input для повторной загрузки того же файла
     } catch (err) {
       setLocalError(err || "Ошибка загрузки");
     }
@@ -84,37 +100,42 @@ function CardModal({ card, onClose }) {
 
   const handleDeleteImage = async (e, id) => {
     e.stopPropagation();
-    const prev = [...localImages];
+    const prev = [...localImages]; // сохраняем для отката
 
-    setLocalImages((imgs) => imgs.filter((i) => i.id !== id)); // сразу удаляем
+    // убираем из UI сразу
+    setLocalImages((imgs) => imgs.filter((i) => i.id !== id));
+
     try {
       await dispatch(deleteImage(id)).unwrap();
     } catch {
-      setLocalImages(prev); // откат
+      // откат при ошибке API
+      setLocalImages(prev);
       setLocalError("Ошибка удаления");
     }
   };
 
-  // Скачать картинку
+  // скачивание через создание Blob-URL
   const handleDownload = async () => {
     if (!lightboxImg) return;
     try {
       const response = await fetch(lightboxImg.src);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
+
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = lightboxImg.url.split("/").pop();
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+
+      URL.revokeObjectURL(blobUrl); // Освобождаем память
     } catch {
       setLocalError("Ошибка скачивания");
     }
   };
 
-  // не рендерим модалку если карточка не выбрана
+  // Не рендерим модалку, если карточка не выбрана
   if (!card) return null;
 
   return (

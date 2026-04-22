@@ -1,3 +1,15 @@
+/**
+ * Карточка с drag-and-drop
+ * Использует @dnd-kit/sortable для перетаскивания внутри колонки
+ * и между колонками. Содержит обложку (первое изображение),
+ * заголовок, описание, срок и кнопки редактирования/удаления
+ *
+ * детали:
+ * - onMouseDown/onPointerDown stopPropagation на кнопках, чтобы
+ *   клик по кнопке не инициировал drag
+ * - Оптимистичное удаление с индикатором загрузки и откатом при ошибке
+ */
+
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { deleteCard } from "../../store/cardsSlice";
@@ -9,22 +21,23 @@ function CardItem({ card, onEdit }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // подключаем карточку к dnd-kit как перетаскиваемый элемент
+  // Подключаем карточку к dnd-kit как перетаскиваемый элемент
   const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
+    attributes, // ARIA-атрибуты для доступности
+    listeners, // Обработчики drag-событий (mousedown/touch)
+    setNodeRef, // Ref для DOM-элемента
+    transform, // Текущее смещение при перетаскивании
+    transition, // CSS-transition для плавности
+    isDragging, // Флаг активного перетаскивания
   } = useSortable({
     id: card.id,
     data: {
       type: "card",
-      columnId: card.column_id, // Для определения исходной колонки
+      columnId: card.column_id, // Для определения исходной колонки в dragEnd
     },
   });
 
+  // Преобразуем координаты dnd-kit в CSS-transform
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -33,14 +46,16 @@ function CardItem({ card, onEdit }) {
   const images = card.images || [];
   const coverImage = images.length > 0 ? images[0] : null;
 
+  // Проверка срока
   const isOverdue = card.due_date && new Date(card.due_date) < new Date();
 
   const handleDelete = async (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Предотвращаем всплытие к колонке
     setError(null);
     setIsLoading(true);
 
     try {
+      // unwrap() позволяет поймать ошибку из rejectWithValue в thunk
       await dispatch(deleteCard(card.id)).unwrap();
     } catch (err) {
       setError(err || "Ошибка удаления карточки");
@@ -56,6 +71,7 @@ function CardItem({ card, onEdit }) {
     }
   };
 
+  // Отключаем нативный dragstart на изображениях
   const handleImgDragStart = (e) => {
     e.preventDefault();
   };

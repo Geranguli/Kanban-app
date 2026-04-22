@@ -1,7 +1,19 @@
+/**
+ * Redux Slice для управления пользователем
+ *
+ * Особенности:
+ * - Сохранение в localStorage при login, очистка при logout
+ */
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
 
-//загрузка пользователя из localStorage
+/**
+ * Загружает пользователя из localStorage
+ * Проверяем наличие обязательных полей (id, username)
+ * При невалидных данных очищаем хранилище, чтобы избежать
+ * последующих ошибок в запросах
+ */
 const loadUserFromStorage = () => {
   try {
     const stored = localStorage.getItem("user");

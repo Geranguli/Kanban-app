@@ -1,3 +1,20 @@
+/**
+ * Страница доски
+ *
+ * Основная логика:
+ * - Загрузка колонок и карточек доски
+ * - Создание новых колонок
+ * - Drag-and-drop карточек между колонками
+ * - Открытие модалки редактирования карточки
+ *
+ * DnD-логика:
+ * 1. Определяем колонку и позицию по over.id
+ * 2. Если бросили на колонку/пустую зону - вставляем в конец
+ * 3. Если бросили на карточку - определяем "до" или "после" по координатам центра
+ * 4. Корректируем позицию при перемещении внутри одной колонки (учитываем сдвиг индексов)
+ * 5. Обновление Redux + API-запрос
+ */
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,7 +39,7 @@ import {
 } from "@dnd-kit/core";
 
 function Board() {
-  const { id } = useParams();
+  const { id } = useParams(); // board_id из URL /boards/:id
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -38,9 +55,11 @@ function Board() {
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [editingCard, setEditingCard] = useState(null);
-  const [activeCard, setActiveCard] = useState(null);
+  const [activeCard, setActiveCard] = useState(null); // Для DragOverlay (превью при drag)
   const [columnError, setColumnError] = useState(null);
 
+  // Группировка карточек по колонкам с сортировкой по position
+  // useMemo предотвращает пересчет при каждом рендере
   const cardsByColumn = useMemo(() => {
     const map = {};
 
@@ -61,6 +80,7 @@ function Board() {
     return map;
   }, [cards, columns]);
 
+  // Загрузка колонок при смене доски
   const loadColumns = useCallback(() => {
     if (id) {
       dispatch(fetchColumns(id));
@@ -71,12 +91,14 @@ function Board() {
     loadColumns();
   }, [loadColumns]);
 
+  // Загрузка карточек при смене доски
   useEffect(() => {
     if (id) {
       dispatch(fetchBoardCards(id));
     }
   }, [dispatch, id]);
 
+  // Загрузка списка досок (для отображения названия в Topbar)
   useEffect(() => {
     if (user && boards.length === 0) {
       dispatch(fetchBoards(user.id));
@@ -143,7 +165,7 @@ function Board() {
         .filter((c) => c.column_id === newColumnId)
         .sort((a, b) => a.position - b.position);
 
-      // Если колонка пустая — позиция 0, иначе в конец
+      // Если колонка пустая - позиция 0, иначе в конец
       newPosition = cardsInColumn.length;
     } else {
       // Бросили на карточку
@@ -158,7 +180,7 @@ function Board() {
 
       const overIndex = cardsInColumn.findIndex((c) => c.id === overId);
 
-      // Определяем, перед или после карточки, по положению указателя/центра
+      // Определяем, перед или после карточки, по положению центра
       const activeRect = active.rect.current.translated;
       const overRect = over.rect;
 
@@ -177,16 +199,16 @@ function Board() {
           );
 
           if (activeIndex < overIndex && isBefore) {
-            // Двигаем вверх, но уже выше целевой — остаёмся перед ней
+            // Двигаем вверх, но уже выше целевой - остаёмся перед ней
             newPosition = overIndex - 1;
           } else if (activeIndex > overIndex && !isBefore) {
-            // Двигаем вниз, но уже ниже целевой — остаёмся после неё
+            // Двигаем вниз, но уже ниже целевой - остаёмся после нее
             newPosition = overIndex + 1;
           } else {
             newPosition = isBefore ? overIndex : overIndex + 1;
           }
         } else {
-          // Из другой колонки — просто перед или после
+          // Из другой колонки - просто перед или после
           newPosition = isBefore ? overIndex : overIndex + 1;
         }
       }
@@ -203,7 +225,7 @@ function Board() {
       newPosition = 0;
     }
 
-    // Если ничего не изменилось — не делаем запрос
+    // Если ничего не изменилось - не делаем запрос
     if (
       activeCard.column_id === newColumnId &&
       activeCard.position === newPosition
@@ -211,7 +233,7 @@ function Board() {
       return;
     }
 
-    // Оптимистичное обновление
+    // Оптимистичное обновление: сразу меняем Redux-стейт для плавности
     dispatch(
       moveCardOptimistic({
         cardId: active.id,
@@ -221,6 +243,7 @@ function Board() {
     );
 
     try {
+      // Синхронизация с сервером
       await dispatch(
         moveCard({
           cardId: active.id,
@@ -230,6 +253,8 @@ function Board() {
       ).unwrap();
     } catch (e) {
       console.error("Ошибка перемещения:", e);
+      // При ошибке сервер вернет полный список карточек,
+      // который заменит оптимистичное состояние
     }
   };
 
@@ -328,6 +353,7 @@ function Board() {
             )}
           </div>
 
+          {/* Превью перетаскиваемой карточки (отдельный слой поверх остальных) */}
           <DragOverlay dropAnimation={dropAnimation}>
             {activeCard ? (
               <div className="card-preview">

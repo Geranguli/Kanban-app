@@ -1,3 +1,17 @@
+/**
+ * Колонка с карточками и формой добавления
+ *
+ * Поддерживает:
+ * - Переименование колонки (inline-редактирование по клику)
+ * - Удаление колонки с подтверждением
+ * - Добавление карточки
+ * - DnD-зону для пустой колонки (useDroppable)
+ * - Отображение ошибок с кнопкой "Повторить" для создания карточки
+ *
+ * обернут в memo, чтобы избежать лишних ререндеров
+ * при изменении других колонок
+ */
+
 import { useState, memo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteColumn, updateColumn } from "../../store/columnsSlice";
@@ -13,6 +27,7 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
   const dispatch = useDispatch();
   const columnRef = useRef(null);
 
+  // Состояние карточек из Redux для загрузки при создании
   const { loading: cardLoading, actionType: cardActionType } = useSelector(
     (state) => state.cards,
   );
@@ -27,11 +42,11 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
     due_date: "",
   });
   const [error, setError] = useState(null);
-  const [lastCardData, setLastCardData] = useState(null);
+  const [lastCardData, setLastCardData] = useState(null); // Для функции "Повторить"
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0]; // Минимальная дата для input type="date"
 
-  // Droppable для самой колонки
+  // Droppable для самой колонки (для определения hover при перетаскивании)
   const { setNodeRef: setColumnRef, isOver: isColumnOver } = useDroppable({
     id: `column-${column.id}`,
     data: {
@@ -40,7 +55,7 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
     },
   });
 
-  // Droppable для пустой зоны внутри колонки
+  // Droppable для пустой зоны внутри колонки (когда нет карточек)
   const { setNodeRef: setEmptyRef, isOver: isEmptyOver } = useDroppable({
     id: `column-empty-${column.id}`,
     data: {
@@ -49,8 +64,9 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
     },
   });
 
+  // Обновление названия колонки
   const handleUpdateColumn = async () => {
-    if (!title.trim()) return;
+    if (!title.trim()) return; //пустое имя не сохраняем
     setError(null);
     setIsLoading(true);
 
@@ -86,7 +102,7 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
     if (!cardData.title.trim()) return;
 
     setError(null);
-    setLastCardData(cardData);
+    setLastCardData(cardData); // Сохраняем для retry
 
     try {
       await dispatch(
@@ -96,11 +112,8 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
         }),
       ).unwrap();
 
-      setNewCard({
-        title: "",
-        description: "",
-        due_date: "",
-      });
+      // Сброс формы при успехе
+      setNewCard({ title: "", description: "", due_date: "" });
       setLastCardData(null);
       setShowForm(false);
     } catch (err) {
@@ -115,6 +128,7 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
     setError(null);
   };
 
+  // Восстановление данных формы из lastCardData для повторной отправки
   const handleRetry = () => {
     if (!lastCardData) return;
     setNewCard({
@@ -123,6 +137,7 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
       due_date: lastCardData.due_date || "",
     });
     setError(null);
+    // Фокус на input после восстановления
     setTimeout(() => {
       const input = document.querySelector(
         `.card-form input[placeholder="Заголовок"]`,
@@ -131,7 +146,6 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
     }, 0);
   };
 
-  // Определяем, есть ли drag over на колонке или пустой зоне
   const isDragOver = isColumnOver || isEmptyOver;
 
   return (
@@ -151,7 +165,7 @@ const ColumnItem = memo(function ColumnItem({ column, cards, onEditCard }) {
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleUpdateColumn}
             onKeyDown={(e) => {
-              if (e.key === "Enter") e.target.blur(); // blur → onBlur → сохранение
+              if (e.key === "Enter") e.target.blur(); // blur -> onBlur -> сохранение
               if (e.key === "Escape") {
                 setEditing(false);
                 setTitle(column.title);

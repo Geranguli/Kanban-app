@@ -1,3 +1,11 @@
+"""
+Точка входа FastAPI-приложения;
+CORS для фронтенда на localhost:5173;
+статические файлы для загруженных изображений (/uploads);
+глобальные обработчики исключений (exception handlers);
+автоматическое создание таблиц при старте (create_all)
+"""
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -13,11 +21,10 @@ import logging
 
 app = FastAPI()
 
-#логирование 
+# логирование для отладки ошибок БД и неожиданных исключений
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# запросы с фронтенда 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -28,18 +35,30 @@ app.add_middleware(
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+
 @app.get("/")
 def read_root():
+    """Health-check эндпоинт."""
     return {"message": "Kanban"}
 
+
+# Создаем таблицы при первом запуске
 Base.metadata.create_all(bind=engine)
 
+# Подключение роутеров
 app.include_router(users.router)
 app.include_router(boards.router)
 app.include_router(columns.router)
 app.include_router(cards.router)
 
-# http ошибки
+
+# Глобальные обработчики исключений
+# Возвращают единообразный JSON-формат
+
+"""
+Обработка HTTP-исключений;
+возвращает структуру {success: false, message: ...}
+"""
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
@@ -50,7 +69,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         },
     )
 
-# ошибки валидации
+"""
+Обработка ошибок валидации Pydantic 
+включает details с указанием проблемных полей 
+"""
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
@@ -58,11 +80,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={
             "success": False,
             "message": "Ошибка валидации данных",
-            "errors": exc.errors(), #какое поле не прошло валидацию
+            "errors": exc.errors(),  # Массив ошибок по полям
         },
     )
 
-# ошибки бд
+"""
+Обработка ошибок базы данных;
+логирует полную ошибку на сервере, но возвращает пользователю
+обезличенное сообщение 
+"""
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     logger.error(f"DB ERROR: {exc}")
@@ -75,7 +101,10 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
         },
     )
 
-#все остальное 
+"""
+обработчик для непредвиденных исключений;
+ловит все, что не поймали обработчики выше
+"""
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"UNEXPECTED ERROR: {exc}")

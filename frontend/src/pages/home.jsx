@@ -1,3 +1,14 @@
+/**
+ * Главная страница со списком досок пользователя
+ *
+ * Функционал:
+ * - Загрузка досок при авторизации (редирект на /login)
+ * - Поиск по названию
+ * - Создание новой доски (inline-форма)
+ * - Удаление всех досок с подтверждением
+ * - Выход из системы (очистка localStorage и Redux)
+ */
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -55,7 +66,7 @@ function Home() {
     dispatch(deleteAllBoards(user.id));
   };
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logout()); // Очищает localStorage и Redux-стейт
     navigate("/login");
   };
   const filteredBoards = boards.filter((board) =>
@@ -65,6 +76,7 @@ function Home() {
   const isSearching = search.length > 0;
   const hasBoards = filteredBoards.length > 0;
 
+  // Состояние загрузки при первом входе
   if (loading && boards.length === 0) {
     return (
       <div className="home-page">
