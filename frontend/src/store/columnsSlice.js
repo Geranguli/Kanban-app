@@ -1,3 +1,10 @@
+/**
+ * Redux Slice для управления колонками
+ *
+ * Массив колонок текущей доски
+ * При смене доски массив полностью заменяется (fetchColumns)
+ */
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
 

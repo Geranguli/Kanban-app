@@ -1,3 +1,14 @@
+/**
+ * Redux Slice для управления досками
+ *
+ * Использует createAsyncThunk для асинхронных операций
+ * Разделение loading (для fetch) и actionLoading/actionType:
+ * - loading: спиннер при первичной загрузке
+ * - actionLoading + actionType: индикация конкретной операции (создание/удаление)
+ *
+ * Все thunk возвращают данные через unwrap() для обработки в компонентах
+ */
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
 
